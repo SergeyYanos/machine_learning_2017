@@ -10,16 +10,14 @@ def one_hot_5_of_10():
     """
     Return a zero vector of size 10 but the fifth value which is 1
     """
-    # +++your code here+++
-    return
+    return np.array([0, 0, 0, 0, 1, 0, 0, 0, 0, 0])
 
 
 def negate_3_to_8(x):
     """
     Given a 1D array, negate all elements which are between 3 and 8
     """
-    # +++your code here+++
-    return
+    return np.append(x[:2], np.append(x[3:8] * -1, x[9:]))
 
 
 def get_size_properties(x):
@@ -27,24 +25,21 @@ def get_size_properties(x):
     Given an array x, return a tuple with the following properties:
     (num_rows, num_cols, num_elements, num_dimensions)
     """
-    # +++your code here+++
-    return
+    return 1, x.shape[0], x.size, x.ndim if len(x.shape) == 1 else x.shape[1], x.shape[0], x.size, x.ndim
 
 
 def append_vector_to_matrix(x, y):
     """
     Append row vector y to the end (bottom) of matrix x
     """
-    # +++your code here+++
-    return
+    return np.stack(x, y)
 
 
 def column_sum(x):
     """
     Return a vector containing the sum of each column of x
     """
-    # +++your code here+++
-    return
+    return np.sum(x, axis=0)
 
 
 def multiplication_table():
@@ -58,7 +53,8 @@ def view_face():
     """
     View the face image using Scipy's scipy.misc.face() and display the image
     """
-    # +++your code here+++
+    plt.imshow(face())
+    plt.show()
 
 
 def q1():
@@ -80,21 +76,21 @@ def plot_samples(sample, x):
     """
     plt.figure()
 
-    plt.subplot(2,2,1)
+    plt.subplot(2, 2, 1)
     plt.title('Normal Random Variable')
     plt.plot(sample)
 
-    plt.subplot(2,2,2)
+    plt.subplot(2, 2, 2)
     plt.title('Probability Distribution Function')
     # +++your code here+++
     plt.plot(pdf)
 
-    plt.subplot(2,2,3)
+    plt.subplot(2, 2, 3)
     plt.title('Cummulative Distribution Function')
     # +++your code here+++
     plt.plot(cdf)
 
-    plt.subplot(2,2,4)
+    plt.subplot(2, 2, 4)
     plt.title('Percent Point Function')
     # +++your code here+++
     plt.plot(ppf)
@@ -105,7 +101,7 @@ def seed_zero():
     """
     Seed numpy's random generator with the value 0
     """
-    # +++your code here+++
+    np.random.seed(0)
 
 
 def test(got, expected):
@@ -145,7 +141,7 @@ def main():
     seed_zero()
 
     x = np.array([[0, 1, 2, 3],
-                 [10, 11, 12, 13]])
+                  [10, 11, 12, 13]])
     y = np.array([20, 21, 22, 23])
     z = np.arange(10)
 
@@ -164,8 +160,8 @@ def main():
     a1 = np.array([0, 1, 10, 3])
     test_array(a1, q1())
     a2 = [[0, 01, 02, 03],
-         [10, 11, 12, 13],
-         [20, 21, 22, 23]]
+          [10, 11, 12, 13],
+          [20, 21, 22, 23]]
     test_array(a2, q2())
 
     multiplication_table()
@@ -180,7 +176,7 @@ def main():
     # Compare the execution speed of matrix multiplication using pure python and using SciPy.
     # Use the mat_mul_pure_python function and the timeit module.
     setup1 = \
-"""from __main__ import mat_mul_pure_python
+        """from __main__ import mat_mul_pure_python
 from scipy.stats import norm
 import numpy as np
 X = np.random.random((100, 100))
@@ -190,7 +186,7 @@ y_list = Y.tolist()"""
     print(timeit.timeit("mat_mul_pure_python(x_list, y_list)", setup=setup1, number=10))
 
     setup2 = \
-"""from scipy.stats import norm
+        """from scipy.stats import norm
 import numpy as np
 X = np.random.random((100, 100))
 Y = np.random.random((100, 100))
