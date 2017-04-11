@@ -32,7 +32,34 @@ print_words() and print_top().
 
 """
 
-import sys
+
+def print_words(filename):
+    with open(filename, 'r') as f:
+        d = {}
+        for w in f.read().split():
+            if w.lower() in d:
+                d[w.lower()] += 1
+            else:
+                d[w.lower()] = 1
+        for w in sorted(d):
+            print "{0} {1}".format(w, d[w])
+
+
+def print_top(filename):
+    with open(filename, 'r') as f:
+        d = {}
+        for w in f.read().split():
+            if w.lower() in d:
+                d[w.lower()] += 1
+            else:
+                d[w.lower()] = 1
+        top = 5
+        for w in sorted(d, key=d.get, reverse=True):
+            if top == 0:
+                break
+            print "{0} {1}".format(w, d[w])
+            top -= 1
+
 
 # +++your code here+++
 # Define print_words(filename) and print_top(filename) functions.
