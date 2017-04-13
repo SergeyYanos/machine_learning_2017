@@ -3,11 +3,24 @@ import numpy
 import numbers
 import os
 import sys
-
 import time
 
 
-def dist(x, y, r):
+def dist_tuples(x, y, r):
+    d = 0.0
+    for i in range(len(x)):
+        if y[i] == sys.maxint:
+            d += 1.0
+        elif x[i] == y[i]:
+            d += 0.0
+        elif isinstance(x[i], numbers.Number) and x[i] != sys.maxint:
+            d += abs(x[i] - y[i]) / r
+        else:
+            d += 1.0
+    return d
+
+
+def dist_rows(x, y, r):
     d = 0.0
     for attr in x.keys():
         if x[attr] == y[attr]:
@@ -26,34 +39,33 @@ def set_correct_types(data_frame):
     for f in features:
         if data_frame[f].dtype == 'object':
             data_frame[f] = data_frame[f].astype("category")
-            data_frame[f + "Int"] = data_frame[f].cat.rename_categories(range(data_frame[f].nunique())).astype(int)
-            data_frame.loc[data_frame[f].isnull(), f + "Int"] = numpy.nan
+            data_frame[f] = data_frame[f].cat.rename_categories(range(data_frame[f].nunique())).astype(int)
+            data_frame.loc[data_frame[f].isnull(), f] = sys.maxint
         elif pandas.unique(data_frame[f]).size < 1000:
             data_frame.loc[data_frame[f].isnull(), f] = sys.maxint
             data_frame[f] = data_frame[f].astype(int)
 
 
 def impute_data(data_frame):
-    iter_rows = data_frame.iterrows()
     for attr in list(data_frame):
-        for i, v in data_frame[(data_frame[attr] == sys.maxint) | (data_frame[attr].isnull())].iterrows():
-            print i, attr
-            print "before:", data_frame.iloc[i][attr]
+        for v in data_frame[(data_frame[attr] == sys.maxint)].itertuples():
             closest_i = -1
             min_dist = sys.maxint
             if data_frame[attr].dtype in ['int32', 'float64']:
-                r = data_frame[attr].max() - data_frame[attr].min()
+                dft = data_frame[attr][data_frame[attr] != sys.maxint]
+                r = dft.max() - dft.min()
             else:
                 r = None
-            start = time.time()
-            for i1, v1 in iter_rows:
-                if i != i1:
-                    d = dist(v, v1, r)
+            for v1 in data_frame.itertuples():
+                if v[0] != v1[0]:
+                    d = dist_tuples(v, v1, r)
                     if d < min_dist:
-                        closest_i, min_dist = i1, d
-            print "time:", time.time() - start
-            data_frame.set_value(index=i, col=attr, value=data_frame.iloc[closest_i][attr])
-            print "after:", data_frame.iloc[i][attr]
+                        closest_i, min_dist = v1[0], d
+                        # print closest_i, min_dist
+            data_frame.set_value(index=v[0], col=attr, value=data_frame.iloc[closest_i][attr])
+            if data_frame.iloc[v[0]][attr] == sys.maxint:
+                print "!!!!!!", attr, v[0], closest_i, min_dist, "!!!!!!"
+                return
 
 if __name__ == "__main__":
     # Task no. 1: Load the Election Challenge data from the ElectionsData.csv file
@@ -65,4 +77,22 @@ if __name__ == "__main__":
 
     # Task no. 3: Perform the following data preparation tasks using ALL the data
     # Imputation:
+    start = time.time()
     impute_data(data)
+    print "total time:", time.time() - start
+
+    # for v in data.itertuples():
+    #     if v[0] == 5491:
+    #         closest_i = -1
+    #         min_dist = sys.maxint
+    #         for v1 in data.itertuples():
+    #             if v[0] != v1[0]:
+    #                 r = data['Number_of_differnt_parties_voted_for'][data['Number_of_differnt_parties_voted_for'] != sys.maxint].max() - \
+    #                     data['Number_of_differnt_parties_voted_for'][data['Number_of_differnt_parties_voted_for'] != sys.maxint].min()
+    #                 d = dist_tuples(v, v1, r)
+    #                 if 0 <= d < min_dist:
+    #                     closest_i, min_dist = v1[0], d
+    #                     print closest_i, min_dist
+    #                     print v1[2], v1[2] == sys.maxint
+    #                     # print abs(v1[i] - v[i])
+    #                     print r
