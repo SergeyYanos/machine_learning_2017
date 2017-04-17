@@ -8,13 +8,14 @@ import time
 
 def dist_tuples(x, y, r):
     d = 0.0
+
     for i in range(len(x)):
         if y[i] == sys.maxint:
             d += 1.0
         elif x[i] == y[i]:
             d += 0.0
-        elif isinstance(x[i], numbers.Number) and x[i] != sys.maxint:
-            d += abs(x[i] - y[i]) / r
+        elif isinstance(x[i], numbers.Number) and x[i] != sys.maxint:# and not numpy.isnan(x[i]):
+            d += abs(round(x[i], 5) - round(y[i], 5)) / r
         else:
             d += 1.0
     return d
@@ -44,7 +45,7 @@ def set_correct_types(data_frame):
         elif pandas.unique(data_frame[f]).size < 1000:
             data_frame.loc[data_frame[f].isnull(), f] = sys.maxint
             data_frame[f] = data_frame[f].astype(int)
-
+        data_frame.loc[numpy.isnan(data_frame[f]), f] = sys.maxint
 
 def impute_data(data_frame):
     for attr in list(data_frame):
@@ -56,16 +57,14 @@ def impute_data(data_frame):
                 r = dft.max() - dft.min()
             else:
                 r = None
-            for v1 in data_frame.itertuples():
+            for v1 in data_frame[(data_frame[attr] != sys.maxint)].itertuples():
                 if v[0] != v1[0]:
                     d = dist_tuples(v, v1, r)
+
                     if d < min_dist:
                         closest_i, min_dist = v1[0], d
                         # print closest_i, min_dist
             data_frame.set_value(index=v[0], col=attr, value=data_frame.iloc[closest_i][attr])
-            if data_frame.iloc[v[0]][attr] == sys.maxint:
-                print "!!!!!!", attr, v[0], closest_i, min_dist, "!!!!!!"
-                return
 
 if __name__ == "__main__":
     # Task no. 1: Load the Election Challenge data from the ElectionsData.csv file
@@ -80,7 +79,7 @@ if __name__ == "__main__":
     start = time.time()
     impute_data(data)
     print "total time:", time.time() - start
-
+    # d = 0.0
     # for v in data.itertuples():
     #     if v[0] == 5491:
     #         closest_i = -1
@@ -96,3 +95,5 @@ if __name__ == "__main__":
     #                     print v1[2], v1[2] == sys.maxint
     #                     # print abs(v1[i] - v[i])
     #                     print r
+    #                 break
+
