@@ -1,72 +1,241 @@
+from PyAstronomy import pyasl
+import matplotlib.pylab as plt
+import traceback
+import threading
 import pandas
 import numpy
-import numbers
 import os
 import sys
 import time
+import logging
 
 
-def dist_tuples(x, y, r):
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)-5s %(name)-5s %(threadName)-5s %(filename)s:%(lineno)s - %(funcName)s() '
+                           '%(''levelname)s : %(message)s',
+                    datefmt="%H:%M:%S")
+logger = logging.getLogger()
+
+features_with_non_negative_values_only = [
+    "Avg_monthly_expense_when_under_age_21",
+    "AVG_lottary_expanses"
+]
+
+
+##########################################################
+#################### Helper functions ####################
+def timed(func):
+    def func_wrapper(*args, **kwargs):
+        start = time.time()
+        logger.info("-" * 75)
+        logger.info(func.func_name)
+        func(*args, **kwargs)
+        logger.info("-" * 75)
+        logger.info("{0} - Total running time: {1} seconds".format(func.func_name, time.time() - start))
+
+    return func_wrapper
+
+
+def plot_all_non_categorical(data_frame):
+    feature_list = list(data_frame)
+    feature_list = filter(lambda f: data_frame[f].dtype in ['int32', 'float64'], feature_list)
+    for feature in feature_list:
+        arr = data_frame[feature][data_frame[feature] != sys.maxint].as_matrix()
+        plt.plot(arr, 'b.')
+        neg_count = 0
+        for i in range(len(arr)):
+            if arr[i] < 0:
+                plt.plot(i, arr[i], 'rp')
+                neg_count += 1
+        logger.info("feature = {0}, # negative = {1}".format(feature, neg_count))
+        plt.show()
+
+
+def is_nan(x):
+    return x != x
+
+
+def calculate_dist_threaded(data_frame, num_threads):
+    assert num_threads > 0
+
+    chunk_size = data_frame.shape[0] / num_threads
+    chunk_sizes = [chunk_size for _ in range(num_threads)]
+
+    if sum(chunk_sizes) != data_frame.shape[0]:
+        while sum(chunk_sizes) != data_frame.shape[0]:
+            for i in range(num_threads):
+                chunk_sizes[i] += 1
+                if sum(chunk_sizes) == data_frame.shape[0]:
+                    break
+
+    indexes = [[] for _ in range(num_threads)]
+    for i in range(num_threads):
+        indexes[i] = map(lambda x: x + (chunk_sizes[i] * i), range(chunk_sizes[i]))
+
+    tuple_data_frame = list(data_frame.itertuples())
+
+    r = [None]
+    for attr in list(data_frame):
+        if data_frame[attr].dtype in ['int32', 'float64']:
+            dft = data_frame[attr][data_frame[attr] != sys.maxint].dropna()
+            r.append(dft.max() - dft.min())
+        else:
+            r.append(None)
+
+    for i in range(data_frame.shape[0]):
+        dist[i] = {}
+
+    threads = []
+    for i in range(num_threads):
+        t = threading.Thread(target=calculate_dist, args=(tuple_data_frame, indexes[i], r))
+        t.start()
+        threads.append(t)
+
+    for t in threads:
+        while True:
+            if not t.isAlive():
+                break
+            t.join(timeout=1)
+
+
+def calculate_dist(tuples, indexes, r):
+    logger.debug("calculate_dist started")
+    for i in indexes:
+        logger.debug("working on index={0}".format(i))
+        for other in tuples:
+            if other[0] in dist[i]:
+                continue
+            if i == other[0]:
+                d = 0.0
+            else:
+                d = dist_tuples(tuples[i], other, r)
+            with dist_lock:
+                dist[i][other[0]] = d
+                dist[other[0]][i] = d
+    return dist
+
+
+def dist_tuples(x, y, r, d_types):
     d = 0.0
-
-    for i in range(len(x)):
-        if y[i] == sys.maxint:
+    for i in range(1, len(x)):
+        if y[i] == sys.maxint or is_nan(y[i]):
             d += 1.0
         elif x[i] == y[i]:
             d += 0.0
-        elif isinstance(x[i], numbers.Number) and x[i] != sys.maxint:# and not numpy.isnan(x[i]):
-            d += abs(round(x[i], 5) - round(y[i], 5)) / r
+        elif d_types[i] in ['int32', 'float64'] and all(x != sys.maxint and not is_nan(x) for x in [x[i], y[i]]):
+            try:
+                d += abs(round(x[i], 5) - round(y[i], 5)) / r[i]
+            except:
+                traceback.print_exc()
+                logger.error("index: {0} | x[{0}]: {1} | y[{0}]: {2} | r[{0}]: {3} | d_types[{0}]: {4}".format(
+                    i, x[i], y[i], r[i], d_types[i]
+                ))
+                logger.error("d_types:\n{0}".format(d_types))
+                logger.error("x:\n{0}".format(x))
+                logger.error("y:\n{0}".format(y))
+                logger.error("r:\n{0}".format(r))
+                sys.exit(-1)
         else:
             d += 1.0
     return d
 
-
-def dist_rows(x, y, r):
-    d = 0.0
-    for attr in x.keys():
-        if x[attr] == y[attr]:
-            d += 0.0
-        elif isinstance(x[attr], numbers.Number) \
-                and not numpy.isnan(x[attr]) and not numpy.isnan(y[attr]) \
-                and x[attr] != sys.maxint and y[attr] != sys.maxint:
-            d += float(abs(x[attr] - y[attr]) / r)
-        else:
-            d += 1.0
-    return d
+##########################################################
+######################## Solution ########################
 
 
+@timed
 def set_correct_types(data_frame):
     features = data_frame.keys().drop('Vote')
-    for f in features:
-        if data_frame[f].dtype == 'object':
-            data_frame[f] = data_frame[f].astype("category")
-            data_frame[f] = data_frame[f].cat.rename_categories(range(data_frame[f].nunique())).astype(int)
-            data_frame.loc[data_frame[f].isnull(), f] = sys.maxint
-        elif pandas.unique(data_frame[f]).size < 1000:
-            data_frame.loc[data_frame[f].isnull(), f] = sys.maxint
-            data_frame[f] = data_frame[f].astype(int)
-        data_frame.loc[numpy.isnan(data_frame[f]), f] = sys.maxint
+    for feature in features:
+        logger.info(feature)
+        logger.info("before - {0}".format(data_frame[feature].dtype))
+        if data_frame[feature].dtype == 'object':
+            data_frame[feature] = data_frame[feature].astype("category")
+            data_frame[feature + "Int"] = data_frame[feature].cat.rename_categories(range(data_frame[feature].nunique())).astype(int)
+            data_frame.loc[data_frame[feature].isnull(), feature + "Int"] = numpy.nan
+        elif pandas.unique(data_frame[feature]).size < 1000:
+            data_frame.loc[data_frame[feature].isnull(), feature] = sys.maxint
+            data_frame[feature] = data_frame[feature].astype(int)
+        else:
+            data_frame.loc[numpy.isnan(data_frame[feature]), feature] = sys.maxint
+        logger.info("after - {0}".format(data_frame[feature].dtype))
 
-def impute_data(data_frame):
-    for attr in list(data_frame):
-        for v in data_frame[(data_frame[attr] == sys.maxint)].itertuples():
+
+@timed
+def impute_data(data_frame, sample_size):
+    d_types = [None] + list(data_frame.dtypes)
+    r = [None]
+    for feature in list(data_frame):
+        if data_frame[feature].dtype in ['int32', 'float64']:
+            dft = data_frame[feature][data_frame[feature] != sys.maxint]
+            r.append(dft.max() - dft.min())
+        else:
+            r.append(None)
+    for feature in list(data_frame):
+        logger.info("{0} - {1}".format(feature, data_frame[feature].dtype))
+        logger.info("before: # missing values = {0}".format(data_frame[feature][data_frame[feature] == sys.maxint].size
+                                                            if data_frame[feature].dtype in ['int32', 'float64'] else
+                                                            data_frame[feature][data_frame[feature].isnull()].size))
+        tuples = list(data_frame[(data_frame[feature] != sys.maxint)].dropna().itertuples())
+        for row in data_frame[(data_frame[feature] == sys.maxint) | data_frame[feature].isnull()].itertuples():
             closest_i = -1
             min_dist = sys.maxint
-            if data_frame[attr].dtype in ['int32', 'float64']:
-                dft = data_frame[attr][data_frame[attr] != sys.maxint]
-                r = dft.max() - dft.min()
-            else:
-                r = None
-            for v1 in data_frame[(data_frame[attr] != sys.maxint)].itertuples():
-                if v[0] != v1[0]:
-                    d = dist_tuples(v, v1, r)
-
+            for i in numpy.random.choice(range(data_frame.shape[0]), sample_size):
+                try:
+                    other = tuples[i]
+                except IndexError:
+                    continue
+                if row[0] != other[0]:
+                    d = dist_tuples(row, other, r, d_types)
                     if d < min_dist:
-                        closest_i, min_dist = v1[0], d
-                        # print closest_i, min_dist
-            data_frame.set_value(index=v[0], col=attr, value=data_frame.iloc[closest_i][attr])
+                        closest_i, min_dist = other[0], d
+            data_frame.set_value(index=row[0], col=feature, value=data_frame.iloc[closest_i][feature])
+            if data_frame.iloc[closest_i][feature] == sys.maxint or is_nan(data_frame.iloc[closest_i][feature]):
+                logger.debug("Bad value!")
+                sys.exit(-1)
+        logger.info("after: # missing values = {0}".format(data_frame[feature][data_frame[feature] == sys.maxint].size
+                                                           if data_frame[feature].dtype in ['int32', 'float64'] else
+                                                           data_frame[feature][data_frame[feature].isnull()].size))
 
-if __name__ == "__main__":
+
+@timed
+def cleanse_data(data_frame):
+    remove_noise(data_frame)
+    remove_outliers(data_frame)
+
+
+@timed
+def remove_noise(data_frame):
+    for feature in features_with_non_negative_values_only:
+        logger.info("{0} - {1}".format(feature, data_frame[feature].dtype))
+        before = data_frame[feature][data_frame[feature]].size
+        logger.info("before: # rows = {0}".format(before))
+        data_frame.drop(data_frame[data_frame[feature] < 0].index, inplace=True)
+        logger.info("after: # rows = {0}".format(data_frame[feature][data_frame[feature]].size))
+        logger.info("# removed rows = {0}".format(before - data_frame[feature][data_frame[feature]].size))
+
+
+@timed
+def remove_outliers(data_frame):
+    for feature in data_frame.keys().drop('Vote'):
+        if feature == 'Vote' or data_frame[feature].dtype not in ["int32", "float64"]:
+            continue
+        arr = data_frame[feature].as_matrix()
+        logger.info("{0} - {1}".format(feature, data_frame[feature].dtype))
+        logger.info("before: # rows = {0}".format(data_frame[feature].size))
+        r = pyasl.generalizedESD(arr, 50, 0.05, fullOutput=True)
+        data_frame.drop(data_frame.index[r[1]], inplace=True)
+        logger.info("after: # rows = {0}".format(data_frame[feature].size))
+        logger.info("# removed rows = {0}".format(r[0]))
+
+
+@timed
+def normalize_data(data_frame):
+    raise NotImplementedError
+
+
+@timed
+def main():
     # Task no. 1: Load the Election Challenge data from the ElectionsData.csv file
     csv_file_path = os.path.join(os.getcwd(), "ElectionsData.csv")
     data = pandas.read_csv(csv_file_path)
@@ -76,24 +245,13 @@ if __name__ == "__main__":
 
     # Task no. 3: Perform the following data preparation tasks using ALL the data
     # Imputation:
-    start = time.time()
-    impute_data(data)
-    print "total time:", time.time() - start
-    # d = 0.0
-    # for v in data.itertuples():
-    #     if v[0] == 5491:
-    #         closest_i = -1
-    #         min_dist = sys.maxint
-    #         for v1 in data.itertuples():
-    #             if v[0] != v1[0]:
-    #                 r = data['Number_of_differnt_parties_voted_for'][data['Number_of_differnt_parties_voted_for'] != sys.maxint].max() - \
-    #                     data['Number_of_differnt_parties_voted_for'][data['Number_of_differnt_parties_voted_for'] != sys.maxint].min()
-    #                 d = dist_tuples(v, v1, r)
-    #                 if 0 <= d < min_dist:
-    #                     closest_i, min_dist = v1[0], d
-    #                     print closest_i, min_dist
-    #                     print v1[2], v1[2] == sys.maxint
-    #                     # print abs(v1[i] - v[i])
-    #                     print r
-    #                 break
+    impute_data(data, 1000)
 
+    # Data Cleansing:
+    cleanse_data(data)
+
+    # Normalization (scaling):
+    # normalize_data(data)
+
+if __name__ == "__main__":
+    main()
