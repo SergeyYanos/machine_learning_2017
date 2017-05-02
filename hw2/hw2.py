@@ -1,3 +1,5 @@
+from collections import Counter
+
 from PyAstronomy import pyasl
 import matplotlib.pylab as plt
 import traceback
@@ -8,7 +10,7 @@ import os
 import sys
 import time
 import logging
-
+from sklearn import preprocessing
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)-5s %(name)-5s %(threadName)-5s %(filename)s:%(lineno)s - %(funcName)s() '
@@ -20,6 +22,8 @@ features_with_non_negative_values_only = [
     "Avg_monthly_expense_when_under_age_21",
     "AVG_lottary_expanses"
 ]
+
+dist = {}
 
 
 ##########################################################
@@ -139,6 +143,7 @@ def dist_tuples(x, y, r, d_types):
             d += 1.0
     return d
 
+
 ##########################################################
 ######################## Solution ########################
 
@@ -151,7 +156,8 @@ def set_correct_types(data_frame):
         logger.info("before - {0}".format(data_frame[feature].dtype))
         if data_frame[feature].dtype == 'object':
             data_frame[feature] = data_frame[feature].astype("category")
-            data_frame[feature + "Int"] = data_frame[feature].cat.rename_categories(range(data_frame[feature].nunique())).astype(int)
+            data_frame[feature + "Int"] = data_frame[feature].cat.rename_categories(
+                range(data_frame[feature].nunique())).astype(int)
             data_frame.loc[data_frame[feature].isnull(), feature + "Int"] = numpy.nan
         elif pandas.unique(data_frame[feature]).size < 1000:
             data_frame.loc[data_frame[feature].isnull(), feature] = sys.maxint
@@ -229,29 +235,101 @@ def remove_outliers(data_frame):
         logger.info("# removed rows = {0}".format(r[0]))
 
 
+DIST_NORMAL = ["Yearly_ExpensesK",
+               "Yearly_IncomeK",
+               "Avg_monthly_expense_on_pets_or_plants",
+               "Avg_monthly_household_cost",
+               "Avg_size_per_room",
+               "Weighted_education_rank",
+               "Political_interest_Total_Score",
+               "Overall_happiness_score"]
+
+DIST_UNIFORM = ["Financial_balance_score_(0-1)",
+                "%Of_Household_Income",
+                "Avg_government_satisfaction",
+                "Avg_education_importance",
+                "Avg_environmental_importance",
+                "Avg_Satisfaction_with_previous_vote",
+                "Avg_monthly_income_all_years",
+                "%_satisfaction_financial_policy",
+                "%Time_invested_in_work",
+                "GenderInt",
+                "Voting_TimeInt",
+                "Age_groupInt",
+                "Main_transportationInt",
+                "Number_of_valued_Kneset_members",
+                "Occupation_Satisfaction",
+                "OccupationInt"]
+
+DIST_DIFFRENT = ["Avg_monthly_expense_when_under_age_21",
+                 "AVG_lottary_expanses",
+                 "Phone_minutes_10_years",
+                 "Garden_sqr_meter_per_person_in_residancy_area",
+                 "Most_Important_IssueInt",
+                 "MarriedInt",
+                 "Will_vote_only_large_partyInt",
+                 "Financial_agenda_mattersInt",
+                 "Looking_at_poles_resultsInt",
+                 "Avg_Residancy_Altitude",
+                 "Num_of_kids_born_last_10_years",
+                 "Last_school_grades",
+                 "Number_of_differnt_parties_voted_for"]
+
+
 @timed
 def normalize_data(data_frame):
-    raise NotImplementedError
+    for_uniform = data_frame[DIST_UNIFORM]
+    for_normal = data_frame[DIST_NORMAL]
+    for_everyelse = data_frame[DIST_DIFFRENT]
+
+    # uniform distribution
+    data_frame[for_uniform.keys()] = (preprocessing.MinMaxScaler(feature_range=(-1, 1), copy=False).fit_transform(for_uniform))
+
+    # normal distribution
+    for e in for_normal.keys():
+        mean = for_normal[e].mean()
+        var = for_normal[e].var()
+        data_frame[e] = for_normal[e].apply(lambda x: ((x - mean) / var))
+    data_frame[for_normal.keys()] = preprocessing.MinMaxScaler(feature_range=(-1, 1), copy=False).fit_transform(for_normal)
+
+    # every else distribution
+    for e in for_everyelse.keys():
+        data_frame[e] = for_everyelse[e].apply(lambda x: 0 if x == 0 else x/pow(10, numpy.ceil(numpy.log10(x))))
+
+
+def feature_selection(data):
+    # preprocessing.
+    pass
 
 
 @timed
 def main():
-    # Task no. 1: Load the Election Challenge data from the ElectionsData.csv file
-    csv_file_path = os.path.join(os.getcwd(), "ElectionsData.csv")
-    data = pandas.read_csv(csv_file_path)
-
-    # Task no. 2: Identify and set the correct type of each attribute.
-    set_correct_types(data)
-
-    # Task no. 3: Perform the following data preparation tasks using ALL the data
-    # Imputation:
-    impute_data(data, 1000)
-
-    # Data Cleansing:
-    cleanse_data(data)
+    # # Task no. 1: Load the Election Challenge data from the ElectionsData.csv file
+    # csv_file_path = os.path.join(os.getcwd(), "ElectionsData.csv")
+    # data = pandas.read_csv(csv_file_path)
+    #
+    # # Task no. 2: Identify and set the correct type of each attribute.
+    # set_correct_types(data)
+    #
+    # # Task no. 3: Perform the following data preparation tasks using ALL the data
+    # # Imputation:
+    # impute_data(data, 1000)
+    # data.to_csv("after_imputation.csv", sep=",", encoding="utf-8")
+    #
+    # # Data Cleansing:
+    # cleanse_data(data)
+    # data.to_csv("after_cleanse.csv", sep=",", encoding="utf-8")
 
     # Normalization (scaling):
-    # normalize_data(data)
+
+    csv_file_path = os.path.join(os.getcwd(), "after_cleanse.csv")
+    data = pandas.read_csv(csv_file_path)
+
+    normalize_data(data)
+
+    # Feature Selection:
+    feature_selection(data)
+
 
 if __name__ == "__main__":
     main()
