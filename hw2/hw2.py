@@ -1,5 +1,6 @@
 from collections import Counter
 
+from sklearn import feature_selection
 from PyAstronomy import pyasl
 import matplotlib.pylab as plt
 import traceback
@@ -280,27 +281,44 @@ DIST_DIFFRENT = ["Avg_monthly_expense_when_under_age_21",
 def normalize_data(data_frame):
     for_uniform = data_frame[DIST_UNIFORM]
     for_normal = data_frame[DIST_NORMAL]
-    for_everyelse = data_frame[DIST_DIFFRENT]
+    for_anything_else = data_frame[DIST_DIFFRENT]
 
     # uniform distribution
-    data_frame[for_uniform.keys()] = (preprocessing.MinMaxScaler(feature_range=(-1, 1), copy=False).fit_transform(for_uniform))
+    data_frame[for_uniform.keys()] = (
+        preprocessing.MinMaxScaler(feature_range=(-1, 1), copy=False).fit_transform(for_uniform))
 
     # normal distribution
     for e in for_normal.keys():
         mean = for_normal[e].mean()
         var = for_normal[e].var()
         data_frame[e] = for_normal[e].apply(lambda x: ((x - mean) / var))
-    data_frame[for_normal.keys()] = preprocessing.MinMaxScaler(feature_range=(-1, 1), copy=False).fit_transform(for_normal)
+    data_frame[for_normal.keys()] = preprocessing.MinMaxScaler(feature_range=(-1, 1), copy=False).fit_transform(
+        for_normal)
 
     # every else distribution
-    for e in for_everyelse.keys():
-        data_frame[e] = for_everyelse[e].apply(lambda x: 0 if x == 0 else x/pow(10, numpy.ceil(numpy.log10(x))))
+    for e in for_anything_else.keys():
+        data_frame[e] = for_anything_else[e].apply(lambda x: 0 if x == 0 else x / pow(10, numpy.ceil(numpy.log10(x))))
 
 
 def feature_selection(data):
-    # preprocessing.
+    filter_method(data)
     pass
 
+
+def filter_method(data):
+    THRESHOULD = 0.5
+    dicty = dict()
+    covariance = data.cov()
+    for key in covariance.keys():
+        for elem in covariance[key].keys():
+            if elem == key: continue
+            covariance[key][elem] = covariance[key][elem] / (numpy.sqrt(data[key].var() * data[elem].var()))
+            if covariance[key][elem] < -THRESHOULD or covariance[key][elem] > THRESHOULD:
+                dicty[key] = None
+                dicty[elem] = None
+
+    for elements in dicty.keys():
+        data = data.drop(elements, axis=1)
 
 @timed
 def main():
@@ -324,6 +342,7 @@ def main():
 
     csv_file_path = os.path.join(os.getcwd(), "after_cleanse.csv")
     data = pandas.read_csv(csv_file_path)
+    data = data.select_dtypes(include=["int32", "float32", "int64", "float64"])
 
     normalize_data(data)
 
