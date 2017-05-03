@@ -267,7 +267,11 @@ def filter_method(data):
         for elem in covariance[key].keys():
             if elem == key:
                 continue
-            covariance[key][elem] = covariance[key][elem] / (numpy.sqrt(data[key].var() * data[elem].var()))
+            if data[key].var() == 0 or data[elem].var() == 0:
+                covariance[key][elem] = 0
+            else:
+                covariance[key][elem] = covariance[key][elem] / (numpy.sqrt(data[key].var() * data[elem].var()))
+
             if covariance[key][elem] < -threshold or covariance[key][elem] > threshold:
                 _dict[key] = None
 
@@ -277,13 +281,6 @@ def filter_method(data):
 
 @timed
 def prepare_data_set(name, data_set):
-    # Task no. 2:
-    set_correct_types(data_set)
-
-    # Task no. 3:
-    # Imputation:
-    impute_data(data_set, min(1000, data_set.shape[0]))
-
     # data_set Cleansing:
     cleanse_data(data_set)
 
@@ -298,11 +295,21 @@ def prepare_data_set(name, data_set):
     save_data_set_to_csv(name=name, data_set=data_set)
 
 
+def set_types_and_impute(data_set):
+    # Task no. 2:
+    set_correct_types(data_set)
+    # Task no. 3:
+    # Imputation:
+    impute_data(data_set, min(1000, data_set.shape[0]))
+
+
 @timed
 def main():
     # Task no. 1:
     csv_file_path = os.path.join(os.getcwd(), "ElectionsData.csv")
     data = pandas.read_csv(csv_file_path)
+
+    set_types_and_impute(data)
 
     # Split the data:
     train_raw, test_raw, validate_raw = numpy.split(data, [int(.7 * len(data)), int(.9 * len(data))])
