@@ -1,10 +1,7 @@
-from collections import Counter
-
 from sklearn import feature_selection
 from PyAstronomy import pyasl
 import matplotlib.pylab as plt
 import traceback
-import threading
 import pandas
 import numpy
 import os
@@ -43,6 +40,10 @@ def timed(func):
     return func_wrapper
 
 
+def save_data_set_to_csv(name, data_set, sep=","):
+    data_set.to_csv(name + ".csv", sep=sep, encoding="utf-8")
+
+
 def plot_all_non_categorical(data_frame):
     feature_list = list(data_frame)
     feature_list = filter(lambda f: data_frame[f].dtype in ['int32', 'float64'], feature_list)
@@ -60,66 +61,6 @@ def plot_all_non_categorical(data_frame):
 
 def is_nan(x):
     return x != x
-
-
-def calculate_dist_threaded(data_frame, num_threads):
-    assert num_threads > 0
-
-    chunk_size = data_frame.shape[0] / num_threads
-    chunk_sizes = [chunk_size for _ in range(num_threads)]
-
-    if sum(chunk_sizes) != data_frame.shape[0]:
-        while sum(chunk_sizes) != data_frame.shape[0]:
-            for i in range(num_threads):
-                chunk_sizes[i] += 1
-                if sum(chunk_sizes) == data_frame.shape[0]:
-                    break
-
-    indexes = [[] for _ in range(num_threads)]
-    for i in range(num_threads):
-        indexes[i] = map(lambda x: x + (chunk_sizes[i] * i), range(chunk_sizes[i]))
-
-    tuple_data_frame = list(data_frame.itertuples())
-
-    r = [None]
-    for attr in list(data_frame):
-        if data_frame[attr].dtype in ['int32', 'float64']:
-            dft = data_frame[attr][data_frame[attr] != sys.maxint].dropna()
-            r.append(dft.max() - dft.min())
-        else:
-            r.append(None)
-
-    for i in range(data_frame.shape[0]):
-        dist[i] = {}
-
-    threads = []
-    for i in range(num_threads):
-        t = threading.Thread(target=calculate_dist, args=(tuple_data_frame, indexes[i], r))
-        t.start()
-        threads.append(t)
-
-    for t in threads:
-        while True:
-            if not t.isAlive():
-                break
-            t.join(timeout=1)
-
-
-def calculate_dist(tuples, indexes, r):
-    logger.debug("calculate_dist started")
-    for i in indexes:
-        logger.debug("working on index={0}".format(i))
-        for other in tuples:
-            if other[0] in dist[i]:
-                continue
-            if i == other[0]:
-                d = 0.0
-            else:
-                d = dist_tuples(tuples[i], other, r)
-            with dist_lock:
-                dist[i][other[0]] = d
-                dist[other[0]][i] = d
-    return dist
 
 
 def dist_tuples(x, y, r, d_types):
@@ -145,12 +86,10 @@ def dist_tuples(x, y, r, d_types):
         else:
             d += 1.0
     return d
-
-
 ##########################################################
 ######################## Solution ########################
 
-# le.fit(list(pandas.DataFrame.astype(
+
 @timed
 def set_correct_types(data_frame):
     features = data_frame.keys().drop('Vote')
@@ -264,26 +203,26 @@ DIST_UNIFORM = ["Financial_balance_score_(0-1)",
                 "Occupation_Satisfaction",
                 "OccupationInt"]
 
-DIST_DIFFRENT = ["Avg_monthly_expense_when_under_age_21",
-                 "AVG_lottary_expanses",
-                 "Phone_minutes_10_years",
-                 "Garden_sqr_meter_per_person_in_residancy_area",
-                 "Most_Important_IssueInt",
-                 "MarriedInt",
-                 "Will_vote_only_large_partyInt",
-                 "Financial_agenda_mattersInt",
-                 "Looking_at_poles_resultsInt",
-                 "Avg_Residancy_Altitude",
-                 "Num_of_kids_born_last_10_years",
-                 "Last_school_grades",
-                 "Number_of_differnt_parties_voted_for"]
+DIST_DIFFERENT = ["Avg_monthly_expense_when_under_age_21",
+                  "AVG_lottary_expanses",
+                  "Phone_minutes_10_years",
+                  "Garden_sqr_meter_per_person_in_residancy_area",
+                  "Most_Important_IssueInt",
+                  "MarriedInt",
+                  "Will_vote_only_large_partyInt",
+                  "Financial_agenda_mattersInt",
+                  "Looking_at_poles_resultsInt",
+                  "Avg_Residancy_Altitude",
+                  "Num_of_kids_born_last_10_years",
+                  "Last_school_grades",
+                  "Number_of_differnt_parties_voted_for"]
 
 
 @timed
 def normalize_data(data_frame):
     for_uniform = data_frame[DIST_UNIFORM]
     for_normal = data_frame[DIST_NORMAL]
-    for_anything_else = data_frame[DIST_DIFFRENT]
+    for_anything_else = data_frame[DIST_DIFFERENT]
 
     # uniform distribution
     data_frame[for_uniform.keys()] = (
@@ -300,9 +239,6 @@ def normalize_data(data_frame):
     # every else distribution
     for e in for_anything_else.keys():
         data_frame[e] = for_anything_else[e].apply(lambda x: 0 if x == 0 else x / pow(10, numpy.ceil(numpy.log10(x))))
-
-
-from sklearn.datasets import load_iris
 
 
 def feature_selection(data, labels):
@@ -324,53 +260,66 @@ def wrapper_method(data, labels):
 
 
 def filter_method(data):
-    THRESHOULD = 0.5
-    dicty = dict()
+    threshold = 0.5
+    _dict = {}
     covariance = data.cov()
     for key in covariance.keys():
         for elem in covariance[key].keys():
-            if elem == key: continue
+            if elem == key:
+                continue
             covariance[key][elem] = covariance[key][elem] / (numpy.sqrt(data[key].var() * data[elem].var()))
-            if covariance[key][elem] < -THRESHOULD or covariance[key][elem] > THRESHOULD:
-                dicty[key] = None
-                dicty[elem] = None
+            if covariance[key][elem] < -threshold or covariance[key][elem] > threshold:
+                _dict[key] = None
+                _dict[elem] = None
 
-    for elements in dicty.keys():
+    for elements in _dict.keys():
         data = data.drop(elements, axis=1)
 
 
 @timed
-def main():
-    # # Task no. 1: Load the Election Challenge data from the ElectionsData.csv file
-    # csv_file_path = os.path.join(os.getcwd(), "ElectionsData.csv")
-    # data = pandas.read_csv(csv_file_path)
-    #
-    # # Task no. 2: Identify and set the correct type of each attribute.
-    # set_correct_types(data)
-    #
-    # # Task no. 3: Perform the following data preparation tasks using ALL the data
-    # # Imputation:
-    # impute_data(data, 1000)
-    # data.to_csv("after_imputation.csv", sep=",", encoding="utf-8")
-    #
-    # # Data Cleansing:
-    # cleanse_data(data)
-    # data.to_csv("after_cleanse.csv", sep=",", encoding="utf-8")
+def prepare_data_set(data_set):
+    # Task no. 2:
+    set_correct_types(data_set)
+
+    # Task no. 3:
+    # Imputation:
+    impute_data(data_set, 1000)
+    # data_set.to_csv("after_imputation.csv", sep=",", encoding="utf-8")
+
+    # data_set Cleansing:
+    cleanse_data(data_set)
+    # data_set.to_csv("after_cleanse.csv", sep=",", encoding="utf-8")
 
     # Normalization (scaling):
+    labels = data_set['Vote']
+    data_set = data_set.drop("Vote", axis=1).select_dtypes(include=["int32", "float32", "int64", "float64"])
 
-    csv_file_path = os.path.join(os.getcwd(), "after_cleanse.csv")
-    data = pandas.read_csv(csv_file_path)
-
-    labels = data['Vote']
-    data = data.drop("Vote", axis=1).select_dtypes(include=["int32", "float32", "int64", "float64"])
-
-    normalize_data(data)
+    normalize_data(data_set)
 
     # Feature Selection:
-    data = feature_selection(data, labels)
+    data_set = feature_selection(data_set, labels)
+
+    return data_set
+
+
+@timed
+def main():
+    # Task no. 1:
+    csv_file_path = os.path.join(os.getcwd(), "ElectionsData.csv")
+    data = pandas.read_csv(csv_file_path)
+
+    # Split the data:
+    train_raw, test_raw, validate_raw = numpy.split(data, [int(.7 * len(data)), int(.9 * len(data))])
+    for data_set in [["train_raw", train_raw], ["test_raw", test_raw], ["validate_raw", validate_raw]]:
+        save_data_set_to_csv(name=data_set[0], data_set=data_set[1])
 
     train, test, validate = numpy.split(data, [int(.7 * len(data)), int(.9 * len(data))])
+
+    for data_set in [["train", train], ["test", test], ["validate", validate]]:
+        data_set[1] = prepare_data_set(data_set[1])
+        name = data_set[0] + "_prepared"
+        save_data_set_to_csv(name=name, data_set=data_set[1])
+
 
 if __name__ == "__main__":
     main()
