@@ -270,36 +270,32 @@ def filter_method(data):
             covariance[key][elem] = covariance[key][elem] / (numpy.sqrt(data[key].var() * data[elem].var()))
             if covariance[key][elem] < -threshold or covariance[key][elem] > threshold:
                 _dict[key] = None
-                _dict[elem] = None
 
     for elements in _dict.keys():
         data = data.drop(elements, axis=1)
 
 
 @timed
-def prepare_data_set(data_set):
+def prepare_data_set(name, data_set):
     # Task no. 2:
     set_correct_types(data_set)
 
     # Task no. 3:
     # Imputation:
-    impute_data(data_set, 1000)
-    # data_set.to_csv("after_imputation.csv", sep=",", encoding="utf-8")
+    impute_data(data_set, min(1000, data_set.shape[0]))
 
     # data_set Cleansing:
     cleanse_data(data_set)
-    # data_set.to_csv("after_cleanse.csv", sep=",", encoding="utf-8")
 
     # Normalization (scaling):
+    normalize_data(data_set)
     labels = data_set['Vote']
     data_set = data_set.drop("Vote", axis=1).select_dtypes(include=["int32", "float32", "int64", "float64"])
 
-    normalize_data(data_set)
-
     # Feature Selection:
     data_set = feature_selection(data_set, labels)
-
-    return data_set
+    data_set['Vote'] = labels
+    save_data_set_to_csv(name=name, data_set=data_set)
 
 
 @timed
@@ -310,15 +306,12 @@ def main():
 
     # Split the data:
     train_raw, test_raw, validate_raw = numpy.split(data, [int(.7 * len(data)), int(.9 * len(data))])
+    train, test, validate = train_raw.copy(), test_raw.copy(), validate_raw.copy()
     for data_set in [["train_raw", train_raw], ["test_raw", test_raw], ["validate_raw", validate_raw]]:
         save_data_set_to_csv(name=data_set[0], data_set=data_set[1])
 
-    train, test, validate = numpy.split(data, [int(.7 * len(data)), int(.9 * len(data))])
-
     for data_set in [["train", train], ["test", test], ["validate", validate]]:
-        data_set[1] = prepare_data_set(data_set[1])
-        name = data_set[0] + "_prepared"
-        save_data_set_to_csv(name=name, data_set=data_set[1])
+        prepare_data_set(data_set[0], data_set[1])
 
 
 if __name__ == "__main__":
