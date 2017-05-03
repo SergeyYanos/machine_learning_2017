@@ -150,7 +150,7 @@ def dist_tuples(x, y, r, d_types):
 ##########################################################
 ######################## Solution ########################
 
-#le.fit(list(pandas.DataFrame.astype(
+# le.fit(list(pandas.DataFrame.astype(
 @timed
 def set_correct_types(data_frame):
     features = data_frame.keys().drop('Vote')
@@ -301,30 +301,26 @@ def normalize_data(data_frame):
     for e in for_anything_else.keys():
         data_frame[e] = for_anything_else[e].apply(lambda x: 0 if x == 0 else x / pow(10, numpy.ceil(numpy.log10(x))))
 
-from sklearn.datasets import load_iris
 
+from sklearn.datasets import load_iris
 
 
 def feature_selection(data, labels):
     filter_method(data)
+    return wrapper_method(data, labels)
 
-    # print X
-    # print list(labels)
-    # exit()
 
+def wrapper_method(data, labels):
     knn = KNeighborsClassifier(n_neighbors=5)
     sfs = SFS(knn,
-        k_features=4,
-        forward=True,
-        floating=False,
-        verbose=2,
-        scoring='accuracy',
-        cv=2)
-    # Overall_happiness_score
-    # Yearly_ExpensesK
-    # Yearly_IncomeK
+              k_features=15,
+              forward=True,
+              floating=False,
+              verbose=2,
+              scoring='accuracy',
+              cv=6)
     features = sfs.fit(data.as_matrix(), labels)
-    return features
+    return data.iloc[:, features.k_feature_idx_]
 
 
 def filter_method(data):
@@ -341,6 +337,7 @@ def filter_method(data):
 
     for elements in dicty.keys():
         data = data.drop(elements, axis=1)
+
 
 @timed
 def main():
@@ -371,8 +368,9 @@ def main():
     normalize_data(data)
 
     # Feature Selection:
-    features = feature_selection(data, labels)
+    data = feature_selection(data, labels)
 
+    train, test, validate = numpy.split(data, [int(.7 * len(data)), int(.9 * len(data))])
 
 if __name__ == "__main__":
     main()
