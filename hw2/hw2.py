@@ -98,9 +98,9 @@ def set_correct_types(data_frame):
         logger.info("before - {0}".format(data_frame[feature].dtype))
         if data_frame[feature].dtype == 'object':
             data_frame[feature] = data_frame[feature].astype("category")
-            data_frame[feature + "Int"] = data_frame[feature].cat.rename_categories(
+            data_frame[feature] = data_frame[feature].cat.rename_categories(
                 range(data_frame[feature].nunique())).astype(int)
-            data_frame.loc[data_frame[feature].isnull(), feature + "Int"] = numpy.nan
+            data_frame.loc[data_frame[feature].isnull(), feature] = numpy.nan
         elif pandas.unique(data_frame[feature]).size < 1000:
             data_frame.loc[data_frame[feature].isnull(), feature] = sys.maxint
             data_frame[feature] = data_frame[feature].astype(int)
@@ -195,23 +195,23 @@ DIST_UNIFORM = ["Financial_balance_score_(0-1)",
                 "Avg_monthly_income_all_years",
                 "%_satisfaction_financial_policy",
                 "%Time_invested_in_work",
-                "GenderInt",
-                "Voting_TimeInt",
-                "Age_groupInt",
-                "Main_transportationInt",
+                "Gender",
+                "Voting_Time",
+                "Age_group",
+                "Main_transportation",
                 "Number_of_valued_Kneset_members",
                 "Occupation_Satisfaction",
-                "OccupationInt"]
+                "Occupation"]
 
 DIST_DIFFERENT = ["Avg_monthly_expense_when_under_age_21",
                   "AVG_lottary_expanses",
                   "Phone_minutes_10_years",
                   "Garden_sqr_meter_per_person_in_residancy_area",
-                  "Most_Important_IssueInt",
-                  "MarriedInt",
-                  "Will_vote_only_large_partyInt",
-                  "Financial_agenda_mattersInt",
-                  "Looking_at_poles_resultsInt",
+                  "Most_Important_Issue",
+                  "Married",
+                  "Will_vote_only_large_party",
+                  "Financial_agenda_matters",
+                  "Looking_at_poles_results",
                   "Avg_Residancy_Altitude",
                   "Num_of_kids_born_last_10_years",
                   "Last_school_grades",
@@ -308,12 +308,12 @@ def main():
     # Task no. 1:
     csv_file_path = os.path.join(os.getcwd(), "ElectionsData.csv")
     data = pandas.read_csv(csv_file_path)
+    train_raw, test_raw, validate_raw = numpy.split(data, [int(.7 * len(data)), int(.9 * len(data))])
 
     set_types_and_impute(data)
-
     # Split the data:
-    train_raw, test_raw, validate_raw = numpy.split(data, [int(.7 * len(data)), int(.9 * len(data))])
-    train, test, validate = train_raw.copy(), test_raw.copy(), validate_raw.copy()
+    train, test, validate = numpy.split(data, [int(.7 * len(data)), int(.9 * len(data))])
+
     for data_set in [["train_raw", train_raw], ["test_raw", test_raw], ["validate_raw", validate_raw]]:
         save_data_set_to_csv(name=data_set[0], data_set=data_set[1])
 
