@@ -12,6 +12,8 @@ import sys
 import time
 import logging
 from sklearn import preprocessing
+from sklearn.neighbors import KNeighborsClassifier
+from mlxtend.feature_selection import SequentialFeatureSelector as SFS
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)-5s %(name)-5s %(threadName)-5s %(filename)s:%(lineno)s - %(funcName)s() '
@@ -148,7 +150,7 @@ def dist_tuples(x, y, r, d_types):
 ##########################################################
 ######################## Solution ########################
 
-
+#le.fit(list(pandas.DataFrame.astype(
 @timed
 def set_correct_types(data_frame):
     features = data_frame.keys().drop('Vote')
@@ -299,10 +301,30 @@ def normalize_data(data_frame):
     for e in for_anything_else.keys():
         data_frame[e] = for_anything_else[e].apply(lambda x: 0 if x == 0 else x / pow(10, numpy.ceil(numpy.log10(x))))
 
+from sklearn.datasets import load_iris
 
-def feature_selection(data):
+
+
+def feature_selection(data, labels):
     filter_method(data)
-    pass
+
+    # print X
+    # print list(labels)
+    # exit()
+
+    knn = KNeighborsClassifier(n_neighbors=5)
+    sfs = SFS(knn,
+        k_features=4,
+        forward=True,
+        floating=False,
+        verbose=2,
+        scoring='accuracy',
+        cv=2)
+    # Overall_happiness_score
+    # Yearly_ExpensesK
+    # Yearly_IncomeK
+    features = sfs.fit(data.as_matrix(), labels)
+    return features
 
 
 def filter_method(data):
@@ -342,12 +364,14 @@ def main():
 
     csv_file_path = os.path.join(os.getcwd(), "after_cleanse.csv")
     data = pandas.read_csv(csv_file_path)
-    data = data.select_dtypes(include=["int32", "float32", "int64", "float64"])
+
+    labels = data['Vote']
+    data = data.drop("Vote", axis=1).select_dtypes(include=["int32", "float32", "int64", "float64"])
 
     normalize_data(data)
 
     # Feature Selection:
-    feature_selection(data)
+    features = feature_selection(data, labels)
 
 
 if __name__ == "__main__":
