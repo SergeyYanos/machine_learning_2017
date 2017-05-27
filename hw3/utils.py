@@ -156,12 +156,13 @@ def cleanse_data(data_frame):
 @timed
 def remove_noise(data_frame):
     for feature in features_with_non_negative_values_only:
-        logger.info("{0} - {1}".format(feature, data_frame[feature].dtype))
-        before = data_frame[feature][data_frame[feature]].size
-        logger.info("before: # rows = {0}".format(before))
-        data_frame.drop(data_frame[data_frame[feature] < 0].index, inplace=True)
-        logger.info("after: # rows = {0}".format(data_frame[feature][data_frame[feature]].size))
-        logger.info("# removed rows = {0}".format(before - data_frame[feature][data_frame[feature]].size))
+        if feature in data_frame:
+            logger.info("{0} - {1}".format(feature, data_frame[feature].dtype))
+            before = data_frame[feature][data_frame[feature]].size
+            logger.info("before: # rows = {0}".format(before))
+            data_frame.drop(data_frame[data_frame[feature] < 0].index, inplace=True)
+            logger.info("after: # rows = {0}".format(data_frame[feature][data_frame[feature]].size))
+            logger.info("# removed rows = {0}".format(before - data_frame[feature][data_frame[feature]].size))
 
 
 @timed
@@ -221,25 +222,28 @@ DIST_DIFFERENT = ["Avg_monthly_expense_when_under_age_21",
 
 @timed
 def normalize_data(data_frame):
-    for_uniform = data_frame[DIST_UNIFORM]
-    for_normal = data_frame[DIST_NORMAL]
-    for_anything_else = data_frame[DIST_DIFFERENT]
+    for_uniform = data_frame[filter(lambda x: x in data_frame, DIST_UNIFORM)]
+    for_normal = data_frame[filter(lambda x: x in data_frame, DIST_NORMAL)]
+    for_anything_else = data_frame[filter(lambda x: x in data_frame, DIST_DIFFERENT)]
 
     # uniform distribution
-    data_frame[for_uniform.keys()] = (
-        preprocessing.MinMaxScaler(feature_range=(-1, 1), copy=False).fit_transform(for_uniform))
+    if len(for_uniform.keys()):
+        data_frame[for_uniform.keys()] = (
+            preprocessing.MinMaxScaler(feature_range=(-1, 1), copy=False).fit_transform(for_uniform))
 
     # normal distribution
-    for e in for_normal.keys():
-        mean = for_normal[e].mean()
-        var = for_normal[e].var()
-        data_frame[e] = for_normal[e].apply(lambda x: ((x - mean) / var))
-    data_frame[for_normal.keys()] = preprocessing.MinMaxScaler(feature_range=(-1, 1), copy=False).fit_transform(
-        for_normal)
+    if len(for_normal.keys()):
+        for e in for_normal.keys():
+            mean = for_normal[e].mean()
+            var = for_normal[e].var()
+            data_frame[e] = for_normal[e].apply(lambda x: ((x - mean) / var))
+        data_frame[for_normal.keys()] = preprocessing.MinMaxScaler(feature_range=(-1, 1), copy=False).fit_transform(
+            for_normal)
 
     # every else distribution
-    for e in for_anything_else.keys():
-        data_frame[e] = for_anything_else[e].apply(lambda x: 0 if x == 0 else x / pow(10, numpy.ceil(numpy.log10(x))))
+    if len(for_anything_else.keys()):
+        for e in for_anything_else.keys():
+            data_frame[e] = for_anything_else[e].apply(lambda x: 0 if x == 0 else x / pow(10, numpy.ceil(numpy.log10(x))))
 
 
 def feature_selection(data, labels):
