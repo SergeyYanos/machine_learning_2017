@@ -236,7 +236,7 @@ def normalize_data(data_frame):
         for e in for_normal.keys():
             mean = for_normal[e].mean()
             var = for_normal[e].var()
-            data_frame[e] = for_normal[e].apply(lambda x: ((x - mean) / var))
+            data_frame[e] = for_normal[e].apply(lambda x: 0 if var == 0 else ((x - mean) / var))
         data_frame[for_normal.keys()] = preprocessing.MinMaxScaler(feature_range=(-1, 1), copy=False).fit_transform(
             for_normal)
 
@@ -244,6 +244,8 @@ def normalize_data(data_frame):
     if len(for_anything_else.keys()):
         for e in for_anything_else.keys():
             data_frame[e] = for_anything_else[e].apply(lambda x: 0 if x == 0 else x / pow(10, numpy.ceil(numpy.log10(x))))
+        data_frame[for_anything_else.keys()] = preprocessing.MinMaxScaler(feature_range=(-1, 1), copy=False).fit_transform(
+            for_anything_else)
 
 
 def feature_selection(data, labels):
