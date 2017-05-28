@@ -12,7 +12,6 @@ Feature_Set = [Target_label, 'Yearly_ExpensesK', 'Yearly_IncomeK', 'Overall_happ
                'Avg_Residancy_Altitude', 'Will_vote_only_large_party', 'Financial_agenda_matters']
 
 
-
 def create_models():
     models = dict()
 
@@ -27,13 +26,14 @@ def create_models():
 
     return models
 
+
 def get_model_score(data, model):
     target = data[Target_label]
     new_data = data.ix[:, data.columns != Target_label]
-    # new_data = Imputer().fit_transform(new_data, target)
     cv = ShuffleSplit(n_splits=5, test_size=0.3, random_state=0)
     scores = cross_val_score(model, new_data, target, cv=cv, scoring='accuracy')
     return scores.mean(), scores.std()
+
 
 def select_model(data, models):
     best_score = 0
@@ -66,6 +66,20 @@ def model_predict(best_model, data):
     predict = best_model.predict(test_data)
     return predict
 
+
+def get_error_and_accuracy(data_confusion_matrix):
+    accuracy = 0
+    error = 0
+    for i in range(data_confusion_matrix.shape[0]):
+        for j in range(data_confusion_matrix.shape[1]):
+            if i == j:
+                accuracy += data_confusion_matrix[i][j]
+            else:
+                error += data_confusion_matrix[i][j]
+    total = accuracy + error
+    return float(accuracy) / total, float(error) / total
+
+
 def main():
     data = read_data_to_pandas("ElectionsData.csv")
 
@@ -84,30 +98,16 @@ def main():
     best_model = select_model(data, models)
     train_model(best_model, train)
     prediction = model_predict(best_model, test)
-    confusion_matrix = get_confusion_matrix(test, prediction)
-    accuracy, error = extract_error_and_accuracy(confusion_matrix)
+    result_confusion_matrix = get_confusion_matrix(test, prediction)
+    accuracy, error = get_error_and_accuracy(result_confusion_matrix)
 
     # model_1, model_2 = train_two_models(train)
     # performance_1 = apply_model(test, model_1)
     # performance_2 = apply_model(test, model_2)
     # best_model = select_best_model([model_1, model_2])
     # prediction = predict(test, best_model)
-    # confusion_matrix = get_confusion_matrix(test, prediction)
-    # error_rate = get_error(confusion_matrix)
-
-
-def extract_error_and_accuracy(confusion_matrix):
-    accuracy = 0
-    error = 0
-    for i in range(confusion_matrix.shape[0]):
-        for j in range(confusion_matrix.shape[1]):
-            if i == j:
-                accuracy += confusion_matrix[i][j]
-            else:
-                error += confusion_matrix[i][j]
-    N = accuracy + error
-    return float(accuracy) / N, float(error) / N
-
+    # result_confusion_matrix = get_confusion_matrix(test, prediction)
+    # error_rate = get_error(result_confusion_matrix)
 
 
 if __name__ == "__main__":
