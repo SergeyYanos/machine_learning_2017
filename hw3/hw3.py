@@ -89,7 +89,7 @@ def main():
     impute_data(data, 1000)
     cleanse_data(data)
     normalize_data(data)
-
+    data[Target_label].astype("category")
     # Split the data:
     train_raw, test_raw, validate_raw = numpy.split(data, [int(.7 * len(data)), int(.9 * len(data))])
     train, test, validate = numpy.split(data, [int(.7 * len(data)), int(.9 * len(data))])

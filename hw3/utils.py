@@ -93,7 +93,7 @@ def dist_tuples(x, y, r, d_types):
 
 @timed
 def set_correct_types(data_frame):
-    features = data_frame.keys()#.drop('Vote')
+    features = data_frame.keys().drop('Vote')
     for feature in features:
         logger.info(feature)
         logger.info("before - {0}".format(data_frame[feature].dtype))
