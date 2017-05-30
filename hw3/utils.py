@@ -1,3 +1,4 @@
+import itertools
 from sklearn import feature_selection
 from PyAstronomy import pyasl
 import matplotlib.pylab as plt
@@ -36,9 +37,10 @@ def timed(func):
         start = time.time()
         logger.info("-" * 75)
         logger.info(func.func_name)
-        func(*args, **kwargs)
+        rc = func(*args, **kwargs)
         logger.info("-" * 75)
         logger.info("{0} - Total running time: {1} seconds".format(func.func_name, time.time() - start))
+        return rc
 
     return func_wrapper
 
