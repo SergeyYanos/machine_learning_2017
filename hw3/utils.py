@@ -1,3 +1,4 @@
+import itertools
 from sklearn import feature_selection
 from PyAstronomy import pyasl
 import matplotlib.pylab as plt
@@ -36,9 +37,10 @@ def timed(func):
         start = time.time()
         logger.info("-" * 75)
         logger.info(func.func_name)
-        func(*args, **kwargs)
+        rc = func(*args, **kwargs)
         logger.info("-" * 75)
         logger.info("{0} - Total running time: {1} seconds".format(func.func_name, time.time() - start))
+        return rc
 
     return func_wrapper
 
@@ -93,7 +95,7 @@ def dist_tuples(x, y, r, d_types):
 
 @timed
 def set_correct_types(data_frame):
-    features = data_frame.keys().drop('Vote')
+    features = data_frame.keys().drop(['Vote', 'Main_transportation'])
     for feature in features:
         logger.info(feature)
         logger.info("before - {0}".format(data_frame[feature].dtype))
@@ -200,7 +202,6 @@ DIST_UNIFORM = ["Financial_balance_score_(0-1)",
                 "Gender",
                 "Voting_Time",
                 "Age_group",
-                "Main_transportation",
                 "Number_of_valued_Kneset_members",
                 "Occupation_Satisfaction",
                 "Occupation"]
