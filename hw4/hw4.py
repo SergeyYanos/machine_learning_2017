@@ -17,12 +17,14 @@ def get_voting_prediction(model, data):
 
 
 @timed
-def get_clustering_prediction(model, data)
+def get_clustering_prediction(model, data):
     raise NotImplementedError
+
 
 @timed
 def get_coalition(voting_prediction, clustering_prediction):
     raise NotImplementedError
+
 
 @timed
 def get_leading_features(prediction):
