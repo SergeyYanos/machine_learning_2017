@@ -1,4 +1,6 @@
 import itertools
+
+from scipy.spatial import distance
 from sklearn import feature_selection
 from PyAstronomy import pyasl
 import matplotlib.pylab as plt
@@ -10,9 +12,9 @@ import os
 import time
 import logging
 from sklearn import preprocessing
+from sklearn.metrics import confusion_matrix
 from sklearn.neighbors import KNeighborsClassifier
 from mlxtend.feature_selection import SequentialFeatureSelector as SFS
-
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)-5s %(name)-5s %(threadName)-5s %(filename)s:%(lineno)s - %(funcName)s() '
@@ -244,8 +246,10 @@ def normalize_data(data_frame):
     # every else distribution
     if len(for_anything_else.keys()):
         for e in for_anything_else.keys():
-            data_frame[e] = for_anything_else[e].apply(lambda x: 0 if x == 0 else x / pow(10, numpy.ceil(numpy.log10(x))))
-        data_frame[for_anything_else.keys()] = preprocessing.MinMaxScaler(feature_range=(-1, 1), copy=False).fit_transform(
+            data_frame[e] = for_anything_else[e].apply(
+                lambda x: 0 if x == 0 else x / pow(10, numpy.ceil(numpy.log10(x))))
+        data_frame[for_anything_else.keys()] = preprocessing.MinMaxScaler(feature_range=(-1, 1),
+                                                                          copy=False).fit_transform(
             for_anything_else)
 
 
@@ -303,6 +307,60 @@ def prepare_data_set(name, data_set):
     save_data_set_to_csv(name=name, data_set=data_set)
 
 
+@timed
 def set_types_and_impute(data_set):
     set_correct_types(data_set)
     impute_data(data_set, min(1000, data_set.shape[0]))
+
+
+@timed
+def get_confusion_matrix(data, predict, target_label):
+    test_label = data[target_label]
+    return confusion_matrix(test_label, predict)
+
+
+@timed
+def model_predict(best_model, data, target_label):
+    test_data = data.ix[:, data.columns != target_label]
+    predict = best_model.predict(test_data)
+    return predict
+
+
+@timed
+def get_error_and_accuracy(data_confusion_matrix):
+    accuracy = 0
+    error = 0
+    for i in range(data_confusion_matrix.shape[0]):
+        for j in range(data_confusion_matrix.shape[1]):
+            if i == j:
+                accuracy += data_confusion_matrix[i][j]
+            else:
+                error += data_confusion_matrix[i][j]
+    total = accuracy + error
+    return float(accuracy) / total, float(error) / total
+
+
+@timed
+def get_division_of_voters(prediction):
+    division_of_votes = {}
+    for vote in prediction:
+        if vote not in division_of_votes:
+            division_of_votes[vote] = 0
+        division_of_votes[vote] += 1
+    total_number_of_votes = len(prediction)
+    for party, votes in division_of_votes.iteritems():
+        division_of_votes[party] = round((float(votes) / total_number_of_votes) * 100, 2)
+    return division_of_votes
+
+
+@timed
+def get_clusters(prediction):
+    clusters = {}
+    total = len(prediction)
+    for x in prediction:
+        if x not in clusters:
+            clusters[x] = 0
+        clusters[x] += 1
+    for k, v in clusters.iteritems():
+        clusters[k] = round((float(v) / total) * 100, 2)
+    return clusters
