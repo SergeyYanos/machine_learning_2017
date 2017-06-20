@@ -58,7 +58,7 @@ def get_coalition(votes_distribution, cluster_histogram):
         d = {}
         for x in votes_distribution_out_of_coalition:
             d[x] = votes_distribution_out_of_coalition[x] * party_percent_out_of_coalition[x]
-        d = sorted(d.items(), key=operator.itemgetter(1))
+        d = sorted(d.items(), reverse=True, key=operator.itemgetter(1))
         while coalition['votes'] < 51:
             p = d.pop()
             coalition['parties'].append(p[0])
