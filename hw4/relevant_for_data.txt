@@ -1,0 +1,94 @@
+18:02:45 root  MainThread utils.py:44 - func_wrapper() INFO : get_division_of_voters - Total running time: 0.00100016593933 seconds
+18:02:45 root  MainThread hw4.py:124 - identify_factor() INFO : Yearly_ExpensesK: {0.48907828409999998: ('Oranges', 32), -0.12804150384099999: ('Yellows', 64), -0.020690753797799999: ('Yellows', 36), -0.028092488294099997: ('Yellows', 37), -0.098097173673199992: ('Yellows', 62), 0.20856124558800002: ('Blues', 33), 0.025281742732599997: ('Blues', 32), -0.87760542176300005: ('Oranges', 71), 0.65350248240800002: ('Oranges', 50), -0.0013285800460099998: ('Yellows', 31), -0.075713482994700002: ('Yellows', 57), -0.81172773902999995: ('Oranges', 60), 0.157820409721: ('Blues', 34), 0.47455622194899999: ('Oranges', 30), -0.64627859100599994: ('Oranges', 41), -0.83928104938800008: ('Oranges', 65), -0.59938832621799998: ('Oranges', 37), -0.060505045160999998: ('Yellows', 50), 0.80584744471699998: ('Oranges', 73), 0.67516109089999998: ('Oranges', 53), 0.63745193300800007: ('Oranges', 48), -0.069605046670999995: ('Yellows', 54), -0.63032669853599999: ('Oranges', 39), -0.034209814361900001: ('Yellows', 39), 0.66830950463899996: ('Oranges', 52), -0.036246564125999997: ('Yellows', 40), -0.0312750002189: ('Yellows', 38), -0.82264369129299997: ('Oranges', 63), -0.043786644210900005: ('Yellows', 43), -0.085899373858599998: ('Yellows', 59), 0.74722893496300002: ('Oranges', 66), -0.11848669284499999: ('Yellows', 63), -0.087246378569100017: ('Yellows', 60), -0.17687914774999999: ('Yellows', 65), 0.50232513813699997: ('Oranges', 34), -0.058219204150599994: ('Yellows', 49), -0.047117228046900009: ('Yellows', 44), -0.87143770414599997: ('Oranges', 70), -0.013958482521799999: ('Yellows', 34), 0.63103875725199998: ('Oranges', 47), 0.58254537314900001: ('Oranges', 43), 0.61177811445800001: ('Oranges', 46), 0.076697897784300001: ('Blues', 35), 0.93382774458199991: ('Oranges', 77), -0.52051223355200005: ('Yellows', 26), -0.59741557344700003: ('Oranges', 36), -0.056282781463800009: ('Yellows', 48), 0.76777708184000004: ('Oranges', 69), 0.49149101881000007: ('Oranges', 33), 0.71575391224900009: ('Oranges', 61), 0.90289127812800007: ('Oranges', 76), 0.55531060712500002: ('Oranges', 40), 0.58810341496200003: ('Oranges', 44), 0.79112995149499998: ('Oranges', 72), 0.69824875222200011: ('Oranges', 57), -0.052773497442500004: ('Yellows', 47), 0.71044625360199998: ('Oranges', 59), -0.048323175502500003: ('Yellows', 45), -0.829933978894: ('Oranges', 64), -0.54367217874899998: ('Oranges', 29), 0.0064727060847600002: ('Blues', 30), 0.43967385523999997: ('Blues', 29), 0.53134337154700007: ('Oranges', 38), 0.66020932946999999: ('Oranges', 51), 0.75302902224800006: ('Oranges', 67), 0.32347460283599999: ('Blues', 31), -0.041285966774400003: ('Yellows', 42), -0.072391280799000007: ('Yellows', 55), -0.010404714552700001: ('Yellows', 33), -0.066800155691599999: ('Yellows', 53), -0.48138943276399998: ('Yellows', 46), -0.063627041662300002: ('Yellows', 52), 0.573673915536: ('Oranges', 42), 0.60265679398100003: ('Oranges', 45), -0.017386728461799998: ('Yellows', 35), 0.64269324019399998: ('Oranges', 49), -0.52938250612100002: ('Oranges', 27), -0.073521588862799997: ('Yellows', 56), -0.78733734912699993: ('Oranges', 56), 0.45639692123600001: ('Blues', 28), -0.92837837400700007: ('Oranges', 75), -0.91923072733300004: ('Oranges', 74), -0.094668719444500005: ('Yellows', 61), 0.68350646448500008: ('Oranges', 54), 0.48164843478500002: ('Oranges', 31), -0.061020002839900001: ('Yellows', 51), 0.51612194159999991: ('Oranges', 35), 0.76326869751100002: ('Oranges', 68), -0.0052862242641099995: ('Yellows', 32), -0.079406858658300009: ('Yellows', 58), 0.70106434012999996: ('Oranges', 58), 0.0049320589340399994: ('Yellows', 30), 0.68982434189700004: ('Oranges', 55)}
+18:02:45 root  MainThread hw4.py:124 - identify_factor() INFO : Unnamed: 0: {8192: ('Yellows', 47), 7007: ('Yellows', 46)}
+18:02:45 root  MainThread hw4.py:124 - identify_factor() INFO : Avg_Residancy_Altitude: {-0.42079997064300001: ('Yellows', 47), -0.596308787457: ('Yellows', 46)}
+18:02:45 root  MainThread hw4.py:124 - identify_factor() INFO : Overall_happiness_score: {0.423413753675: ('Yellows', 48), 0.62712955540699999: ('Yellows', 47), -0.0066380677707900005: ('Yellows', 66), 0.82196498189600009: ('Yellows', 44), 0.380096437083: ('Yellows', 49), 0.065432667830399999: ('Yellows', 56), 0.87948662947400003: ('Yellows', 43), 0.77267791215000003: ('Yellows', 45), -0.029762545151499998: ('Yellows', 72), 0.0052627953134300005: ('Yellows', 64), -0.63204060274099993: ('Yellows', 75), -0.034862051422699998: ('Yellows', 73), 0.080797555630399989: ('Yellows', 55), 0.102396081525: ('Yellows', 54), -0.014472418966399999: ('Yellows', 68), 0.14473087340999999: ('Yellows', 51), 0.108149556491: ('Yellows', 53), 0.043269912344699998: ('Yellows', 58), -0.77093672737700003: ('Yellows', 76), -0.85070232834500004: ('Yellows', 77), 0.71451239326600002: ('Yellows', 46), 0.92693274039900009: ('Yellows', 42), 0.0548933179519: ('Yellows', 57), 0.0088084404107900017: ('Yellows', 63), 0.132233304936: ('Yellows', 52), 0.018856733821599997: ('Yellows', 61), -0.044985339374799996: ('Yellows', 74), -0.027555359854200004: ('Yellows', 71), 0.35064318770699998: ('Yellows', 50)}
+18:02:45 root  MainThread hw4.py:124 - identify_factor() INFO : Will_vote_only_large_party: {1.0: ('Yellows', 48), -1.0: ('Browns', 80)}
+18:02:45 root  MainThread hw4.py:124 - identify_factor() INFO : Financial_agenda_matters: {1.0: ('Whites', 46), -1.0: ('Yellows', 50)}
+18:02:45 root  MainThread hw4.py:124 - identify_factor() INFO : Yearly_IncomeK: {0.270525813414: ('Yellows', 51), -0.087086558255599994: ('Oranges', 43), 0.27791845874000004: ('Yellows', 49), 0.11774617457: ('Yellows', 57), -0.074244022036399987: ('Oranges', 40), 0.333644155133: ('Yellows', 32), 0.200127305437: ('Yellows', 56), 0.656960735164: ('Oranges', 68), 0.38269401179799994: ('Reds', 45), -0.150759932047: ('Oranges', 53), 0.60850144958800001: ('Oranges', 50), 0.28147376503800003: ('Yellows', 47), -0.60058210371099996: ('Oranges', 77), 0.32180083905500001: ('Yellows', 36), 0.71339133014200007: ('Oranges', 76), 0.23147738716299998: ('Yellows', 55), 0.34080411503200003: ('Reds', 35), 0.28110815767899999: ('Yellows', 48), 0.40899564653600001: ('Reds', 49), 0.290870446803: ('Yellows', 44), 0.32957615390099998: ('Yellows', 33), 0.36636736290799998: ('Reds', 42), 0.369627022345: ('Reds', 43), 0.30080451933399999: ('Yellows', 41), 0.33745005123599997: ('Reds', 33), 0.31319990300799999: ('Yellows', 38), 0.61288266657399992: ('Oranges', 51), 0.458358314805: ('Reds', 58), 0.453586488186: ('Reds', 57), 0.44051638282899996: ('Reds', 54), 0.28802886657499999: ('Yellows', 45), 0.25113538048200001: ('Yellows', 53), 0.40642562810000005: ('Reds', 48), -0.17038915911300001: ('Oranges', 55), 0.67262417964599996: ('Oranges', 72), 0.64697272758299995: ('Oranges', 65), 0.57507760588799994: ('Oranges', 39), 0.46477869888700002: ('Reds', 61), 0.56968481855899999: ('Reds', 39), 0.47222177043899999: ('Reds', 64), 0.59624059755600001: ('Oranges', 45), 0.41854492735799997: ('Reds', 50), 0.53069360928599996: ('Reds', 56), 0.48902849524400005: ('Reds', 70), 0.47959393967500002: ('Reds', 66), 0.24194159291099998: ('Yellows', 54), 0.42621080513899995: ('Reds', 51), 0.37442176273100003: ('Reds', 44), 0.29456620248900001: ('Yellows', 43), -0.119025396999: ('Oranges', 48), -0.19444171094500001: ('Oranges', 60), 0.31644790425399999: ('Yellows', 37), 0.33899491222200001: ('Reds', 34), 0.34692078099399998: ('Reds', 37), 0.27248781232300001: ('Yellows', 50), 0.29737585803599997: ('Yellows', 42), 0.67358577775099993: ('Oranges', 73), 0.39892155460500001: ('Reds', 47), 0.62888325536700007: ('Oranges', 58), 0.35639280787600003: ('Reds', 40), -0.190701569997: ('Oranges', 59), 0.65305509023800001: ('Oranges', 67), 0.68473881850099994: ('Oranges', 74), 0.33434958320300001: ('Reds', 32), 0.395235113109: ('Reds', 46), 0.26089067481999995: ('Yellows', 52), 0.44607622705600003: ('Reds', 55), 0.50775566612099998: ('Reds', 71), -0.20604141813700003: ('Oranges', 62), 0.306728653716: ('Yellows', 40), 0.47505910837499998: ('Reds', 65), -0.20109613858199998: ('Oranges', 61), 0.35067601891500005: ('Reds', 38), -0.21955509968600001: ('Oranges', 66), 0.58140318007500003: ('Oranges', 42), 0.51382415465099995: ('Reds', 69), 0.69172709968700008: ('Oranges', 75), 0.66577786156700003: ('Oranges', 71), 0.43950161503200003: ('Reds', 53), 0.32278844950999996: ('Yellows', 35), 0.53482026519199999: ('Reds', 52), -0.14193464522099999: ('Oranges', 52), 0.46352527394599996: ('Reds', 60), 0.309352735617: ('Yellows', 39), 0.52040549143199999: ('Reds', 67), 0.35741720636399998: ('Reds', 41), 0.64359971030599994: ('Oranges', 64), 0.59912558931600002: ('Oranges', 46), 0.28539596386400001: ('Yellows', 46), 0.66230818952299997: ('Oranges', 70), 0.32862685795200003: ('Yellows', 34), 0.46058915822700003: ('Reds', 59), 0.34483348306400002: ('Reds', 36), -0.11246056394000001: ('Oranges', 47), 0.48587810801299997: ('Reds', 68), 0.46797597341799996: ('Reds', 62)}
+18:02:45 root  MainThread hw4.py:124 - identify_factor() INFO : Most_Important_Issue: {1.0: ('Yellows', 46), -0.71428571428599996: ('Yellows', 47)}
+18:02:45 root  MainThread utils.py:43 - func_wrapper() INFO : ---------------------------------------------------------------------------
+18:02:45 root  MainThread utils.py:44 - func_wrapper() INFO : identify_factor - Total running time: 158.825999975 seconds
+18:02:45 root  MainThread hw4.py:201 - main() INFO : Performance stats for the generative model: Accuracy Rate=0.592686642966, Error Rate=0.407313357034
+18:02:45 root  MainThread hw4.py:204 - main() INFO : Performance stats for the clustering model: BIC=30407.6866921, AIC=29910.5966761
+18:02:45 root  MainThread hw4.py:205 - main() INFO : Votes distribution by party:
+18:02:45 root  MainThread hw4.py:207 - main() INFO : Reds: 16.81
+18:02:45 root  MainThread hw4.py:207 - main() INFO : Greens: 2.74
+18:02:45 root  MainThread hw4.py:207 - main() INFO : Whites: 7.31
+18:02:45 root  MainThread hw4.py:207 - main() INFO : Yellows: 47.08
+18:02:45 root  MainThread hw4.py:207 - main() INFO : Greys: 3.71
+18:02:45 root  MainThread hw4.py:207 - main() INFO : Oranges: 2.18
+18:02:45 root  MainThread hw4.py:207 - main() INFO : Browns: 3.25
+18:02:45 root  MainThread hw4.py:207 - main() INFO : Pinks: 7.82
+18:02:45 root  MainThread hw4.py:207 - main() INFO : Blues: 7.92
+18:02:45 root  MainThread hw4.py:207 - main() INFO : Purples: 1.17
+18:03:09 root  MainThread hw4.py:210 - main() INFO : Voters distribution by cluster:
+18:03:09 root  MainThread hw4.py:212 - main() INFO : 0: 14.68
+18:03:09 root  MainThread hw4.py:212 - main() INFO : 1: 85.32
+18:03:19 root  MainThread hw4.py:215 - main() INFO : Voting histogram by cluster:
+18:03:19 root  MainThread hw4.py:217 - main() INFO : 0: {'Whites': 72, 'Browns': 64, 'Pinks': 78, 'Purples': 23, 'Greens': 52}
+18:03:19 root  MainThread hw4.py:217 - main() INFO : 1: {'Reds': 331, 'Greens': 2, 'Whites': 72, 'Yellows': 927, 'Greys': 73, 'Oranges': 43, 'Blues': 156, 'Pinks': 76}
+18:03:55 root  MainThread hw4.py:221 - main() INFO : The coalition consists of: {'votes': 77.7, 'parties': ['Reds', 'Yellows', 'Greys', 'Oranges', 'Blues']}
+18:03:55 root  MainThread hw4.py:223 - main() INFO : Leading features by party:
+18:03:55 root  MainThread hw4.py:225 - main() INFO : Reds: 
+Will_vote_only_large_party    0.000000
+Financial_agenda_matters      0.000000
+Yearly_IncomeK                0.003218
+Overall_happiness_score       0.023063
+dtype: float64
+18:03:55 root  MainThread hw4.py:225 - main() INFO : Greens: 
+Will_vote_only_large_party    0.000000
+Financial_agenda_matters      0.000000
+Avg_Residancy_Altitude        0.043362
+Overall_happiness_score       0.124348
+dtype: float64
+18:03:55 root  MainThread hw4.py:225 - main() INFO : Whites: 
+Will_vote_only_large_party    0.000000
+Financial_agenda_matters      0.000000
+Avg_Residancy_Altitude        0.047522
+Most_Important_Issue          0.081189
+dtype: float64
+18:03:55 root  MainThread hw4.py:225 - main() INFO : Yellows: 
+Will_vote_only_large_party    0.000000
+Financial_agenda_matters      0.000000
+Yearly_IncomeK                0.003041
+Yearly_ExpensesK              0.006039
+dtype: float64
+18:03:55 root  MainThread hw4.py:225 - main() INFO : Greys: 
+Will_vote_only_large_party    0.000000
+Financial_agenda_matters      0.000000
+Yearly_IncomeK                0.001866
+Overall_happiness_score       0.003368
+dtype: float64
+18:03:55 root  MainThread hw4.py:225 - main() INFO : Oranges: 
+Will_vote_only_large_party    0.000000
+Financial_agenda_matters      0.000000
+Overall_happiness_score       0.002641
+Yearly_ExpensesK              0.016463
+dtype: float64
+18:03:55 root  MainThread hw4.py:225 - main() INFO : Browns: 
+Will_vote_only_large_party    0.000000
+Financial_agenda_matters      0.000000
+Avg_Residancy_Altitude        0.044763
+Yearly_ExpensesK              0.248884
+dtype: float64
+18:03:55 root  MainThread hw4.py:225 - main() INFO : Pinks: 
+Will_vote_only_large_party    0.000000
+Financial_agenda_matters      0.000000
+Most_Important_Issue          0.020261
+Avg_Residancy_Altitude        0.054072
+dtype: float64
+18:03:55 root  MainThread hw4.py:225 - main() INFO : Blues: 
+Will_vote_only_large_party    0.000000
+Financial_agenda_matters      0.000000
+Overall_happiness_score       0.001183
+Yearly_IncomeK                0.003554
+dtype: float64
+18:03:55 root  MainThread hw4.py:225 - main() INFO : Purples: 
+Will_vote_only_large_party    0.000000
+Financial_agenda_matters      0.000000
+Yearly_IncomeK                0.030480
+Overall_happiness_score       0.057636
+dtype: float64
+18:06:15 root  MainThread utils.py:43 - func_wrapper() INFO : ---------------------------------------------------------------------------
+18:06:15 root  MainThread utils.py:44 - func_wrapper() INFO : main - Total running time: 369.081999779 seconds

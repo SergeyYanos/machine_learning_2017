@@ -1,7 +1,9 @@
 import operator
+
 from utils import *
 from sklearn.naive_bayes import GaussianNB
 from sklearn.mixture.gaussian_mixture import GaussianMixture
+import matplotlib.pyplot as plt
 
 
 @timed
@@ -122,6 +124,53 @@ def identify_factor():
         logger.info("{0}: {1}".format(feature, d))
 
 
+def plot_dict(title, x_axis, y_axis, dct):
+    plt.title(title)
+    plt.xlabel(x_axis)
+    plt.ylabel(y_axis)
+    autolabel(plt.bar(range(len(dct)), dct.values(), align='center'))
+    plt.xticks(range(len(dct)), dct.keys())
+
+    plt.show()
+
+
+def plot_hists_together(title, x_axis, y_axis, dct):
+    plt.title(title)
+    plt.xlabel(x_axis)
+    plt.ylabel(y_axis)
+    s = set()
+    tranp = 1.0 / len(dct)
+    alpha = 1.0
+    for keys, values in dct.iteritems():
+        autolabel(plt.bar(range(len(values)), values.values(), alpha=alpha, align='center'))
+        for elem in values.keys():
+            s.add(elem)
+        alpha -= tranp
+
+    plt.xticks(range(len(s)), list(s))
+    plt.legend(dct.keys())
+    plt.show()
+
+
+def plot_numpy_arr_together(title, x_axis, y_axis, dct):
+    for keys, values in dct.iteritems():
+        plt.title(title + " '" + keys + "'")
+        plt.xlabel(x_axis)
+        plt.ylabel(y_axis)
+        tmp_dct = dict(zip(list(values.index), list(values)))
+        ind = numpy.arange(len(tmp_dct))
+        autolabel(plt.bar(ind, tmp_dct.values()))
+        plt.xticks(ind, tmp_dct.keys())
+        plt.show()
+
+
+
+def autolabel(rects):
+    for rect in rects:
+        h = rect.get_height()
+        plt.text(rect.get_x() + rect.get_width() / 2., 1.05 * h, '%.2f' % float(h), ha='center', va='bottom')
+
+
 @timed
 def main():
     # load prepared training set
@@ -156,16 +205,26 @@ def main():
     logger.info("Votes distribution by party:")
     for party, votes in votes_distribution.iteritems():
         logger.info(party + ": " + str(votes))
+    plot_dict("Votes distribution by party", "Parties", "Votes", votes_distribution)
+
     logger.info("Voters distribution by cluster:")
     for cluster, distribution in cluster_voters_distribution.iteritems():
         logger.info("%s: %s" % (cluster, distribution))
+    plot_dict("Voters distribution by cluster", "Cluster", "Votes", cluster_voters_distribution)
+
     logger.info("Voting histogram by cluster:")
     for cluster, histogram in cluster_histogram.iteritems():
         logger.info("%s: %s" % (cluster, histogram))
+
+    plot_hists_together("Clusters Histogram", "Cluster", "Votes", cluster_histogram)
+
     logger.info("The coalition consists of: %s" % coalition)
+
     logger.info("Leading features by party:")
     for party, features in leading_features.iteritems():
         logger.info("%s: \n%s" % (party, features))
+        # plot_dict("Leading features by party '%s'" % party, "Cluster", "Votes", features)
+    plot_numpy_arr_together("Leading features for party", "Features", "Variance", leading_features)
 
 
 if __name__ == "__main__":
