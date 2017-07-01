@@ -433,7 +433,7 @@ def get_clustering_prediction(model, data):
 
 @timed
 def get_coalition(votes_distribution, cluster_histogram):
-    coalition = {"parties": [], "votes": 0}
+    coalition = {"parties": [], "votes": 0.0}
     coalition_cluster, coalition_cluster_size = 0, 0
     for cluster, histogram in cluster_histogram.iteritems():
         currents_cluster_size = sum(histogram.values())
@@ -444,6 +444,9 @@ def get_coalition(votes_distribution, cluster_histogram):
         if party not in cluster_histogram[opposition_cluster]:
             coalition['parties'].append(party)
             coalition['votes'] += votes_distribution[party]
+            if coalition['votes'] >= 51:
+                break
+
     if coalition['votes'] < 51:
         votes_distribution_out_of_coalition = {k: v for k, v in votes_distribution.iteritems() if k in
                                                cluster_histogram[opposition_cluster]}
@@ -451,13 +454,14 @@ def get_coalition(votes_distribution, cluster_histogram):
         for party, votes in cluster_histogram[opposition_cluster].iteritems():
             try:
                 party_percent_out_of_coalition[party] = \
-                    float(votes) / votes + cluster_histogram[coalition_cluster][party]
+                    float(votes) / (votes + cluster_histogram[coalition_cluster][party])
             except KeyError:
                 party_percent_out_of_coalition[party] = 100.0
         d = {}
         for x in votes_distribution_out_of_coalition:
             d[x] = votes_distribution_out_of_coalition[x] * party_percent_out_of_coalition[x]
-        d = sorted(d.items(), reverse=True, key=operator.itemgetter(1))
+            d[x] /= 100
+        d = sorted(d.items(), reverse=False, key=operator.itemgetter(1))
         while coalition['votes'] < 51:
             p = d.pop()
             coalition['parties'].append(p[0])
