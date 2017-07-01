@@ -1,4 +1,4 @@
-import itertools
+from mlxtend.evaluate import confusion_matrix
 from sklearn import feature_selection
 from PyAstronomy import pyasl
 import matplotlib.pylab as plt
@@ -9,10 +9,15 @@ import sys
 import os
 import time
 import logging
+import operator
 from sklearn import preprocessing
+from sklearn.mixture import GaussianMixture
+from sklearn.model_selection import ShuffleSplit, cross_val_score
+from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from mlxtend.feature_selection import SequentialFeatureSelector as SFS
-
+from sklearn.neural_network import MLPClassifier
+from sklearn.tree import DecisionTreeClassifier
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)-5s %(name)-5s %(threadName)-5s %(filename)s:%(lineno)s - %(funcName)s() '
@@ -24,6 +29,10 @@ features_with_non_negative_values_only = [
     "Avg_monthly_expense_when_under_age_21",
     "AVG_lottary_expanses"
 ]
+
+Target_label = 'Vote'
+Feature_Set = ['Yearly_ExpensesK', 'Yearly_IncomeK', 'Overall_happiness_score', 'Most_Important_Issue',
+               'Avg_Residancy_Altitude', 'Will_vote_only_large_party', 'Financial_agenda_matters']
 
 
 def read_data_to_pandas(path):
@@ -95,7 +104,10 @@ def dist_tuples(x, y, r, d_types):
 
 @timed
 def set_correct_types(data_frame):
-    features = data_frame.keys().drop(['Vote', 'Main_transportation'])
+    if 'Vote' in data_frame.keys():
+        features = data_frame.keys().drop(['Vote'])
+    else:
+        features = data_frame.keys()
     for feature in features:
         logger.info(feature)
         logger.info("before - {0}".format(data_frame[feature].dtype))
@@ -169,7 +181,11 @@ def remove_noise(data_frame):
 
 @timed
 def remove_outliers(data_frame):
-    for feature in data_frame.keys().drop('Vote'):
+    if 'Vote' in data_frame.keys():
+        features = data_frame.keys().drop(['Vote'])
+    else:
+        features = data_frame.keys()
+    for feature in features:
         if feature == 'Vote' or data_frame[feature].dtype not in ["int32", "float64"]:
             continue
         arr = data_frame[feature].as_matrix()
@@ -306,3 +322,170 @@ def prepare_data_set(name, data_set):
 def set_types_and_impute(data_set):
     set_correct_types(data_set)
     impute_data(data_set, min(1000, data_set.shape[0]))
+
+
+@timed
+def create_models():
+    models = dict()
+
+    # multi layer perceptron with optimize gradient descent
+    models['Neural network'] = MLPClassifier(max_iter=2000)
+    # CART decision tree (Classification and Regression Tree)
+    models['Decision tree'] = DecisionTreeClassifier()
+    # Gaussian naive bayes, the likelihood is using gaussian
+    # (exp((x-mean)/2var)/sqrt(2pi*var^2))
+    models['Naive bayes'] = GaussianNB()
+    # knn with k  = 5
+    models['KNN'] = KNeighborsClassifier()
+
+    return models
+
+
+@timed
+def get_model_score(data, model):
+    target = data[Target_label]
+    new_data = data.ix[:, data.columns != Target_label]
+    cv = ShuffleSplit(n_splits=5, test_size=0.3, random_state=0)
+    scores = cross_val_score(model, new_data, target, cv=cv, scoring='accuracy')
+    return scores.mean(), scores.std()
+
+
+@timed
+def select_model(data, models):
+    best_score = 0
+    name = str()
+    for clf_name, classifier in models.iteritems():
+        score, std = get_model_score(data, classifier)
+        if score > best_score:
+            best_score = score
+            name = clf_name
+
+    logger.info("The best model is {name} with score {score}".format(name=name, score=best_score))
+
+    return models[name]
+
+
+@timed
+def train_model(best_model, data):
+    train_label = data[Target_label]
+    train_data = data.ix[:, data.columns != Target_label]
+    best_model.fit(train_data, train_label)
+
+
+@timed
+def get_confusion_matrix(data, predict):
+    test_label = data[Target_label]
+    return confusion_matrix(test_label, predict)
+
+
+@timed
+def model_predict(best_model, data):
+    test_data = data.ix[:, data.columns != 'IdentityCard_Num']
+    predict = best_model.predict(test_data)
+    return predict
+
+
+@timed
+def get_error_and_accuracy(data_confusion_matrix):
+    accuracy = 0
+    error = 0
+    for i in range(data_confusion_matrix.shape[0]):
+        for j in range(data_confusion_matrix.shape[1]):
+            if i == j:
+                accuracy += data_confusion_matrix[i][j]
+            else:
+                error += data_confusion_matrix[i][j]
+    total = accuracy + error
+    return float(accuracy) / total, float(error) / total
+
+
+@timed
+def get_winning_party(division_of_votes):
+    return sorted(division_of_votes.items(), key=operator.itemgetter(1), reverse=True)[0]
+
+
+@timed
+def get_division_of_voters(prediction):
+    division_of_votes = {}
+    for vote in prediction:
+        if vote not in division_of_votes:
+            division_of_votes[vote] = 0
+        division_of_votes[vote] += 1
+    total_number_of_votes = len(prediction)
+    for party, votes in division_of_votes.iteritems():
+        division_of_votes[party] = round((float(votes) / total_number_of_votes) * 100, 2)
+    return division_of_votes
+
+
+@timed
+def train_clustering_model(data):
+    model = GaussianMixture(n_components=2, max_iter=1000, n_init=10)
+    model.fit(data)
+    return model
+
+
+@timed
+def get_clustering_prediction(model, data):
+    test_data = data.ix[:, data.columns != 'Vote']
+    prediction = model.predict(test_data)
+    return prediction
+
+
+@timed
+def get_coalition(votes_distribution, cluster_histogram):
+    coalition = {"parties": [], "votes": 0}
+    coalition_cluster, coalition_cluster_size = 0, 0
+    for cluster, histogram in cluster_histogram.iteritems():
+        currents_cluster_size = sum(histogram.values())
+        if currents_cluster_size > coalition_cluster_size:
+            coalition_cluster, coalition_cluster_size = cluster, currents_cluster_size
+    opposition_cluster = 1 - coalition_cluster
+    for party in cluster_histogram[coalition_cluster]:
+        if party not in cluster_histogram[opposition_cluster]:
+            coalition['parties'].append(party)
+            coalition['votes'] += votes_distribution[party]
+    if coalition['votes'] < 51:
+        votes_distribution_out_of_coalition = {k: v for k, v in votes_distribution.iteritems() if k in
+                                               cluster_histogram[opposition_cluster]}
+        party_percent_out_of_coalition = {}
+        for party, votes in cluster_histogram[opposition_cluster].iteritems():
+            try:
+                party_percent_out_of_coalition[party] = \
+                    float(votes) / votes + cluster_histogram[coalition_cluster][party]
+            except KeyError:
+                party_percent_out_of_coalition[party] = 100.0
+        d = {}
+        for x in votes_distribution_out_of_coalition:
+            d[x] = votes_distribution_out_of_coalition[x] * party_percent_out_of_coalition[x]
+        d = sorted(d.items(), reverse=True, key=operator.itemgetter(1))
+        while coalition['votes'] < 51:
+            p = d.pop()
+            coalition['parties'].append(p[0])
+            coalition['votes'] += p[1]
+
+    return coalition
+
+
+@timed
+def get_cluster_voting_histogram(clusters, votes):
+    histogram = {}
+    for i in range(len(clusters)):
+        if clusters[i] not in histogram:
+            histogram[clusters[i]] = {}
+        if votes[i] not in histogram[clusters[i]]:
+            histogram[clusters[i]][votes[i]] = 0
+        histogram[clusters[i]][votes[i]] += 1
+    return histogram
+
+
+@timed
+def get_clusters(prediction):
+    clusters = {}
+    total = len(prediction)
+    for x in prediction:
+        if x not in clusters:
+            clusters[x] = 0
+        clusters[x] += 1
+    for k, v in clusters.iteritems():
+        clusters[k] = round((float(v) / total) * 100, 2)
+    return clusters
