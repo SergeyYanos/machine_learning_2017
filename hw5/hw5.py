@@ -2,14 +2,6 @@ from utils import *
 
 
 @timed
-def prepare_data_set(data_set):
-    set_correct_types(data_set)
-    impute_data(data_set, 1000)
-    cleanse_data(data_set)
-    normalize_data(data_set)
-
-
-@timed
 def main():
     pass
     #  load the data
@@ -41,6 +33,12 @@ def main():
     winning_party = get_winning_party(votes_distribution)
     #  get steady coalition
     coalition = get_coalition(votes_distribution, cluster_histogram)
+
+    #  create the final prediction csv
+    final_data_set = pandas.DataFrame(columns=['IdentityCard_Num', 'PredictVote'])
+    final_data_set['IdentityCard_Num'] = pandas.Series(test_set['IdentityCard_Num'].values).values
+    final_data_set['PredictVote'] = pandas.Series(voting_prediction).values
+    save_data_set_to_csv("Final_Elections_Prediction", final_data_set)
 
     logger.info("Votes distribution by party:")
     for party, votes in votes_distribution.iteritems():

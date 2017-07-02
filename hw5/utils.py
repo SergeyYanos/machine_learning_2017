@@ -265,6 +265,14 @@ def normalize_data(data_frame):
             for_anything_else)
 
 
+@timed
+def prepare_data_set(data_set):
+    set_correct_types(data_set)
+    impute_data(data_set, 1000)
+    cleanse_data(data_set)
+    normalize_data(data_set)
+
+
 def feature_selection(data, labels):
     filter_method(data)
     return wrapper_method(data, labels)
@@ -301,28 +309,6 @@ def filter_method(data):
 
     for elements in _dict.keys():
         data = data.drop(elements, axis=1)
-
-
-@timed
-def prepare_data_set(name, data_set):
-    # data_set Cleansing:
-    cleanse_data(data_set)
-
-    # Normalization (scaling):
-    normalize_data(data_set)
-    labels = data_set['Vote']
-    data_set = data_set.drop("Vote", axis=1).select_dtypes(include=["int32", "float32", "int64", "float64"])
-
-    # Feature Selection:
-    data_set = feature_selection(data_set, labels)
-    data_set['Vote'] = labels
-    save_data_set_to_csv(name=name, data_set=data_set)
-
-
-def set_types_and_impute(data_set):
-    set_correct_types(data_set)
-    impute_data(data_set, min(1000, data_set.shape[0]))
-
 
 @timed
 def create_models():
@@ -440,14 +426,17 @@ def get_coalition(votes_distribution, cluster_histogram):
         if currents_cluster_size > coalition_cluster_size:
             coalition_cluster, coalition_cluster_size = cluster, currents_cluster_size
     opposition_cluster = 1 - coalition_cluster
-    for party in cluster_histogram[coalition_cluster]:
-        if party not in cluster_histogram[opposition_cluster]:
-            coalition['parties'].append(party)
-            coalition['votes'] += votes_distribution[party]
+    sorted_votes_distribution = sorted(votes_distribution.items(), reverse=True, key=operator.itemgetter(1))
+    for party in sorted_votes_distribution:
+        if party[0] not in cluster_histogram[opposition_cluster]:
+            coalition['parties'].append(party[0])
+            coalition['votes'] += party[1]
             if coalition['votes'] >= 51:
                 break
 
     if coalition['votes'] < 51:
+        logger.info(coalition)
+        logger.info("Not enough votes in the base coalition, adding more parties")
         votes_distribution_out_of_coalition = {k: v for k, v in votes_distribution.iteritems() if k in
                                                cluster_histogram[opposition_cluster]}
         party_percent_out_of_coalition = {}
@@ -461,11 +450,13 @@ def get_coalition(votes_distribution, cluster_histogram):
         for x in votes_distribution_out_of_coalition:
             d[x] = votes_distribution_out_of_coalition[x] * party_percent_out_of_coalition[x]
             d[x] /= 100
-        d = sorted(d.items(), reverse=False, key=operator.itemgetter(1))
+        d = sorted(d.items(), reverse=True, key=operator.itemgetter(1))
+        logger.info(d)
         while coalition['votes'] < 51:
             p = d.pop()
             coalition['parties'].append(p[0])
-            coalition['votes'] += p[1]
+            coalition['votes'] += votes_distribution[p[0]]
+            logger.info(coalition)
 
     return coalition
 
